@@ -62,9 +62,9 @@ std::vector<std::string> FDInfoBase::find_fds() {
     for (const auto& entry : fs::directory_iterator(path)) {
         if (!entry.is_symlink())
             continue;
-        
+
         std::filesystem::path link;
-        
+
         try {
             link = fs::read_symlink(entry);
         } catch(const std::filesystem::filesystem_error& ex) {
@@ -77,7 +77,7 @@ std::vector<std::string> FDInfoBase::find_fds() {
         // this is only for testing, so remove it later
         if (link.filename() != drm_node && link.string().substr(0, 13) != "/dev/dri/card")
             continue;
-        
+
         fds.push_back(entry.path().filename());
     }
 
@@ -107,7 +107,7 @@ void FDInfoBase::open_fds(const std::vector<std::string>& fds) {
 
             if (key != "drm-client-id" || client_ids.find(val) != client_ids.end())
                 continue;
-            
+
             total += 1;
             client_ids.insert(val);
 
@@ -166,7 +166,7 @@ float FDInfoWrapper::get_memory_used(pid_t pid, const std::string& key) {
 
         if (used.empty())
             continue;
-        
+
         float val = static_cast<float>(std::stoull(used));
 
         if (used.find("KiB") != std::string::npos)
@@ -196,7 +196,7 @@ uint64_t FDInfoWrapper::get_gpu_time(pid_t pid, const std::string& key) {
 
         if (time.empty())
             continue;
-        
+
         total += std::stoull(time);
     }
 

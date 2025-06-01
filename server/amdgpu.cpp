@@ -21,17 +21,17 @@ int AMDGPU::get_load() {
 }
 
 float AMDGPU::get_vram_used() {
-    float used = sysfs_hwmon.get_sensor_value("vram_used") / 1024.f / 1024.f;
+    float used = sysfs_hwmon.get_sensor_value("vram_used") / 1024.f / 1024.f / 1024.f;
     return used;
 }
 
 float AMDGPU::get_gtt_used() {
-    float used = sysfs_hwmon.get_sensor_value("gtt_used") / 1024.f / 1024.f;
+    float used = sysfs_hwmon.get_sensor_value("gtt_used") / 1024.f / 1024.f / 1024.f;
     return used;
 }
 
 float AMDGPU::get_memory_total() {
-    float used = sysfs_hwmon.get_sensor_value("vram_total") / 1024.f / 1024.f;
+    float used = sysfs_hwmon.get_sensor_value("vram_total") / 1024.f / 1024.f / 1024.f;
     return used;
 }
 
