@@ -1,0 +1,102 @@
+#pragma once
+
+#include <vector>
+#include <string>
+#include <atomic>
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <map>
+#include <regex>
+#include <fstream>
+#include <filesystem>
+#include <set>
+
+#include <pthread.h>
+#include <spdlog/spdlog.h>
+
+#include "../common/gpu_metrics.hpp"
+
+using namespace std::chrono_literals;
+namespace fs = std::filesystem;
+
+class GPU {
+protected:
+    gpu_metrics_system system_metrics = {};
+    std::map<pid_t, gpu_metrics_process> process_metrics;
+
+    std::mutex system_metrics_mutex, process_metrics_mutex;
+
+    std::thread worker_thread;
+
+    std::chrono::time_point<std::chrono::steady_clock> previous_time;
+    std::chrono::nanoseconds delta_time_ns;
+
+    virtual void poll_overrides() {}
+    void poll();
+    void check_pids_existence();
+
+    // System-related functions
+    virtual int     get_load()                  { return 0; }
+
+    virtual float   get_vram_used()             { return 0.f; }
+    virtual float   get_gtt_used()              { return 0.f; }
+    virtual float   get_memory_total()          { return 0.f; }
+    virtual int     get_memory_clock()          { return 0; }
+    virtual int     get_memory_temp()           { return 0; }
+
+    virtual int     get_temperature()           { return 0; }
+    virtual int     get_junction_temperature()  { return 0; }
+
+    virtual int     get_core_clock()            { return 0; }
+    virtual int     get_voltage()               { return 0; }
+
+    virtual float   get_power_usage()           { return 0.f; }
+    virtual float   get_power_limit()           { return 0.f; }
+
+    virtual float   get_apu_cpu_power()         { return 0.f; }
+    virtual int     get_apu_cpu_temp()          { return 0; }
+
+    virtual bool    get_is_power_throttled()    { return false; }
+    virtual bool    get_is_current_throttled()  { return false; }
+    virtual bool    get_is_temp_throttled()     { return false; }
+    virtual bool    get_is_other_throttled()    { return false; }
+
+    virtual int     get_fan_speed()             { return 0; }
+    virtual bool    get_fan_rpm()               { return false; }
+
+    // Process-related functions
+    virtual int     get_process_load(pid_t pid)         { return 0; }
+    virtual float   get_process_vram_used(pid_t pid)    { return 0.f; }
+    virtual float   get_process_gtt_used(pid_t pid)     { return 0.f; }
+
+public:
+    const std::string drm_node;
+    const std::string pci_dev;
+    const uint16_t vendor_id;
+    const uint16_t device_id;
+
+    std::atomic<bool> is_active = false;
+    std::atomic<bool> stop_thread = false;
+
+    GPU(const std::string& drm_node, const std::string& pci_dev,
+        uint16_t vendor_id, uint16_t device_id);
+
+    ~GPU();
+
+    void add_pid(pid_t pid);
+    void print_metrics();
+
+    virtual gpu_metrics_system get_system_metrics();
+    virtual std::map<pid_t, gpu_metrics_process> get_process_metrics();
+    virtual gpu_metrics_process get_process_metrics(const size_t pid);
+};
+
+class GPUS {
+private:
+    std::string get_pci_device_address(const std::string& drm_card_path);
+
+public:
+    std::vector<std::shared_ptr<GPU>> available_gpus;
+    GPUS();
+};
