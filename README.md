@@ -1,6 +1,8 @@
 #### Dependencies
 1. C and C++ compiler
-2. `apt install python3-mako glslang-tools`
+2. Meson
+3. Ninja
+4. `apt install python3-mako glslang-tools`
 
 #### Compilation
 
