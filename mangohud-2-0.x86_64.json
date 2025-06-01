@@ -12,10 +12,10 @@
          "vkGetDeviceProcAddr": "overlay_GetDeviceProcAddr"
       },
       "enable_environment": {
-        "MANGOHUD": "1"
+        "MANGOHUD_2": "1"
       },
       "disable_environment": {
-        "DISABLE_MANGOHUD": "1"
+        "DISABLE_MANGOHUD_2": "1"
       }
     }
 }
