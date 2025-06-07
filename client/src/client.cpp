@@ -78,8 +78,13 @@ void poll_server(pollfd& server_poll, bool& connected, int sock) {
     }
 }
 
-int main () {
-    std::string socket_path = "/home/user/Desktop/mangohud.sock";
+void client_thread () {
+    std::string socket_path = get_socket_path();
+
+    if (socket_path.empty())
+        return; 
+
+    SPDLOG_INFO("Socket path: {}", socket_path);
 
     const sockaddr_un addr = {
         .sun_family = AF_UNIX
@@ -117,7 +122,7 @@ int main () {
         std::this_thread::sleep_for(1s);
     }
 
-    return 0;
+    return;
 }
 
 void init_client() {
@@ -125,6 +130,6 @@ void init_client() {
 
     SPDLOG_DEBUG("init_client()");
 
-    std::thread t = std::thread(&main);
+    std::thread t = std::thread(&client_thread);
     t.detach();
 }

@@ -126,3 +126,21 @@ void send_message(int fd, mangohud_message& msg) {
 
     SPDLOG_DEBUG("Sent message to fd {} len={}", fd, ret);
 }
+
+std::string get_socket_path() {
+    const char* p = getenv("MANGOHUD_SOCKET_PATH");
+
+    if (p)
+        return p;
+
+    SPDLOG_INFO("MANGOHUD_SOCKET_PATH is not set, using XDG_RUNTIME_DIR");
+
+    const char* xdg_run = getenv("XDG_RUNTIME_DIR");
+
+    if (!xdg_run) {
+        SPDLOG_ERROR("XDG_RUNTIME_DIR is not set. Failed to determine socket path!");
+        return "";
+    }
+
+    return std::string(xdg_run) + "/mangohud.sock";
+}

@@ -18,7 +18,12 @@
 int main() {
     spdlog::set_level(spdlog::level::level_enum::trace);
 
-    std::string socket_path = "/home/user/Desktop/mangohud.sock";
+    std::string socket_path = get_socket_path();
+
+    if (socket_path.empty())
+        return -1;
+
+    SPDLOG_INFO("Socket path: {}", socket_path);
 
     int sock = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
 
