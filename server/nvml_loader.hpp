@@ -7,10 +7,7 @@
 
 class libnvml_loader {
 public:
-    libnvml_loader() {
-        load();
-    }
-
+    libnvml_loader();
     ~libnvml_loader();
 
     bool load();

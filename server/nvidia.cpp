@@ -15,7 +15,7 @@ bool Nvidia::init_nvml(const std::string& pci_dev) {
     if (!nvml)
         return false;
 
-    if (!nvml->IsLoaded())
+    if (!nvml->is_loaded())
         return false;
 
     nvmlReturn_t result = nvml->nvmlInit();

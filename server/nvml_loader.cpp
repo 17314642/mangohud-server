@@ -12,6 +12,10 @@ std::shared_ptr<libnvml_loader> get_libnvml_loader()
     return libnvml_;
 }
 
+libnvml_loader::libnvml_loader() {
+    load();
+}
+
 libnvml_loader::~libnvml_loader() {
     unload();
 }
