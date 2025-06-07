@@ -1,4 +1,4 @@
-project('MangoHud', ['c', 'cpp'])
+project('MangoHud-2', ['c', 'cpp'])
 
 cpp = meson.get_compiler('cpp')
 cc = meson.get_compiler('c')

@@ -34,5 +34,6 @@ shared_library(
   'vk-layer',
   objects: vk_layer_static_lib.extract_all_objects(recursive: true),
   link_with: vk_layer_static_lib,
-  link_args : link_args
+  link_args : link_args,
+  install: true
 )

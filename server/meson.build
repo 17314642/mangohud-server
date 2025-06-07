@@ -11,4 +11,4 @@ src = [
     '../common/socket.cpp'
 ]
 
-executable('mangohud-server', src, dependencies: spdlog_dep)
+executable('mangohud-server', src, dependencies: spdlog_dep, install: true)

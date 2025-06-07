@@ -41,3 +41,17 @@ imgui_options = [
 dearimgui_dep = dependency('imgui', fallback: ['imgui'], required: true, default_options: imgui_options)
 
 subdir('src')
+
+libdir_mangohud = join_paths(get_option('prefix'), get_option('libdir'))
+
+conf_data = configuration_data()
+conf_data.set('cpu_family', host_machine.cpu_family())
+conf_data.set('ld_libdir_mangohud_abs', libdir_mangohud)
+
+configure_file(input : 'mangohud-2.json.in',
+  output : '@0@.@1@.json'.format(meson.project_name(), host_machine.cpu_family()),
+  configuration : conf_data,
+  install : true,
+  install_dir : join_paths(get_option('datadir'), 'vulkan', 'implicit_layer.d'),
+  install_tag : 'runtime',
+)
