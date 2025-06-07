@@ -16,7 +16,7 @@
 #include "../common/socket.hpp"
 
 int main() {
-    spdlog::set_level(spdlog::level::level_enum::trace);
+    spdlog::set_level(spdlog::level::level_enum::debug);
 
     std::string socket_path = get_socket_path();
 

@@ -48,7 +48,7 @@ bool receive_message(int fd, mangohud_message& msg) {
         return false;
     }
 
-    // SPDLOG_DEBUG("Received new message from fd {} len={}", fd, ret);
+    SPDLOG_TRACE("Received new message from fd {} len={}", fd, ret);
 
     return true;
 }
@@ -88,7 +88,7 @@ bool receive_message_with_creds(int fd, size_t& pid) {
 
     std::string s = buf.data();
 
-    SPDLOG_DEBUG("Received new message from fd {} len={}: \"{}\"", fd, ret, s);
+    SPDLOG_TRACE("Received new message from fd {} len={}: \"{}\"", fd, ret, s);
 
     cmsghdr *cmhp = get_cmsghdr(&message_header);
 
@@ -97,7 +97,7 @@ bool receive_message_with_creds(int fd, size_t& pid) {
  
     ucred *ucredp = (struct ucred *) CMSG_DATA(cmhp);
 
-    SPDLOG_DEBUG(
+    SPDLOG_TRACE(
         "Received credentials pid=[{}], uid=[{}], gid=[{}]",
         ucredp->pid, ucredp->uid, ucredp->gid
     );
@@ -124,7 +124,7 @@ void send_message(int fd, mangohud_message& msg) {
         return;
     }
 
-    SPDLOG_DEBUG("Sent message to fd {} len={}", fd, ret);
+    SPDLOG_TRACE("Sent message to fd {} len={}", fd, ret);
 }
 
 std::string get_socket_path() {

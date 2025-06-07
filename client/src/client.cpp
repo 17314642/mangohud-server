@@ -59,10 +59,16 @@ void poll_server(pollfd& server_poll, bool& connected, int sock) {
     if (server_poll.revents == 0)
         return;
 
-    SPDLOG_INFO("fd {}: revents = {}", server_poll.fd, server_poll.revents);
+    SPDLOG_TRACE("fd {}: revents = {}", server_poll.fd, server_poll.revents);
 
     if (server_poll.revents & POLLHUP || server_poll.revents & POLLNVAL) {
         connected = false;
+        
+        {
+            std::unique_lock lock(metrics_lock);
+            metrics = {};
+        }
+
         close(sock);
         return;
     }
@@ -126,7 +132,7 @@ void client_thread () {
 }
 
 void init_client() {
-    spdlog::set_level(spdlog::level::level_enum::trace);
+    spdlog::set_level(spdlog::level::level_enum::debug);
 
     SPDLOG_DEBUG("init_client()");
 

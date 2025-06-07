@@ -9,11 +9,6 @@ void HwmonBase::add_sensors(const std::vector<hwmon_sensor>& input_sensors)
 }
 
 void HwmonBase::find_sensors() {
-    if (base_dir.empty()) {
-        SPDLOG_WARN("hwmon: base_dir is empty. hwmon will not work!");
-        return;
-    }
-
     SPDLOG_DEBUG("hwmon: checking \"{}\" directory", base_dir);
 
     for (const auto &entry : fs::directory_iterator(base_dir)) {
@@ -42,7 +37,7 @@ void HwmonBase::find_sensors() {
             }
         }
     }
-};
+}
 
 void HwmonBase::open_sensors() {
     for (auto& s : sensors) {
@@ -123,6 +118,9 @@ void HwmonBase::setup(const std::vector<hwmon_sensor>& input_sensors, const std:
     if (base_dir.empty())
         base_dir = find_hwmon_dir(drm_node);
 
+    if (base_dir.empty())
+        return;
+
     find_sensors();
     open_sensors();
 }
@@ -148,10 +146,19 @@ void HwmonBase::poll_sensors()
     }
 }
 
+bool HwmonBase::exists(const std::string& generic_name) {
+    if (sensors.find(generic_name) == sensors.end())
+        return false;
+
+    return sensors[generic_name].filename.empty();
+}
+
 uint64_t HwmonBase::get_sensor_value(const std::string& generic_name)
 {
-    if (sensors.find(generic_name) == sensors.end())
+    if (sensors.find(generic_name) == sensors.end()) {
+        SPDLOG_DEBUG("sensor \"{}\" doesn't exist", generic_name);
         return 0;
+    }
     
     return sensors[generic_name].val;
 }

@@ -2,7 +2,7 @@
 
 #include "gpu.hpp"
 #include "intel.hpp"
-#include "amdgpu.hpp"
+#include "amdgpu/amdgpu.hpp"
 #include "nvidia.hpp"
 #include "../common/helpers.hpp"
 
@@ -163,13 +163,13 @@ void GPU::check_pids_existence() {
 
 void GPU::poll() {
     while (!stop_thread) {
-        SPDLOG_DEBUG("poll()");
+        SPDLOG_TRACE("poll()");
 
         auto current_time = std::chrono::steady_clock::now();
         delta_time_ns = current_time - previous_time;
         previous_time = current_time;
 
-        poll_overrides();
+        pre_poll_overrides();
 
         gpu_metrics_system cur_sys_metrics = {
             .load                   = get_load(),
@@ -243,19 +243,19 @@ void GPU::add_pid(pid_t pid) {
 }
 
 gpu_metrics_system GPU::get_system_metrics() {
-    SPDLOG_DEBUG("GPU get_system_metrics()");
+    SPDLOG_TRACE("GPU get_system_metrics()");
     std::unique_lock lock(system_metrics_mutex);
     return system_metrics;
 }
 
 std::map<pid_t, gpu_metrics_process> GPU::get_process_metrics() {
-    SPDLOG_DEBUG("GPU get_process_metrics");
+    SPDLOG_TRACE("GPU get_process_metrics");
     std::unique_lock lock(process_metrics_mutex);
     return process_metrics;
 }
 
 gpu_metrics_process GPU::get_process_metrics(const size_t pid) {
-    SPDLOG_DEBUG("GPU get_process_metrics");
+    SPDLOG_TRACE("GPU get_process_metrics");
     std::unique_lock lock(process_metrics_mutex);
     return process_metrics[pid];
 }

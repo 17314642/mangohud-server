@@ -20,7 +20,7 @@ private:
     std::map<pid_t, uint64_t> previous_gpu_times;
 
 protected:
-    void poll_overrides() override;
+    void pre_poll_overrides() override;
 
 public:
     Intel(
@@ -55,7 +55,6 @@ public:
     // bool    get_is_other_throttled() override;   // TODO
 
     int     get_fan_speed() override;
-    bool    get_fan_rpm() override;
 
     // Process-related functions
     int     get_process_load(pid_t pid) override;

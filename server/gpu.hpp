@@ -56,7 +56,7 @@ protected:
     std::chrono::time_point<std::chrono::steady_clock> previous_time;
     std::chrono::nanoseconds delta_time_ns;
 
-    virtual void poll_overrides() {}
+    virtual void pre_poll_overrides() {}
     void poll();
     void check_pids_existence();
 
@@ -87,7 +87,7 @@ protected:
     virtual bool    get_is_other_throttled()    { return false; }
 
     virtual int     get_fan_speed()             { return 0; }
-    virtual bool    get_fan_rpm()               { return false; }
+    virtual bool    get_fan_rpm()               { return true; }
 
     // Process-related functions
     virtual int     get_process_load(pid_t pid)         { return 0; }

@@ -45,6 +45,7 @@ public:
     void setup(const std::vector<hwmon_sensor>& input_sensors, const std::string& drm_node = "");
     void poll_sensors();
 
+    bool exists(const std::string& generic_name);
     uint64_t get_sensor_value(const std::string& generic_name);
 };
 

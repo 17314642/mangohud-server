@@ -7,7 +7,7 @@ Intel::Intel(
     hwmon.setup(sensors, drm_node);
 }
 
-void Intel::poll_overrides() {
+void Intel::pre_poll_overrides() {
     hwmon.poll_sensors();
     fdinfo.poll_all();
 }
@@ -43,10 +43,6 @@ int Intel::get_voltage() {
 
 int Intel::get_fan_speed() {
     return hwmon.get_sensor_value("fan_speed");
-}
-
-bool Intel::get_fan_rpm() {
-    return true;
 }
 
 int Intel::get_process_load(pid_t pid) {

@@ -10,6 +10,9 @@ void draw_metrics() {
         cur_metrics = metrics;
     }
 
+    if (!cur_metrics.num_of_gpus)
+        ImGui::Text("Not connected to server.");
+
     for (int i = 0; i < cur_metrics.num_of_gpus; i++) {
         gpu& gpu = cur_metrics.gpus[i];
         gpu_metrics_system& system = gpu.system_metrics;
