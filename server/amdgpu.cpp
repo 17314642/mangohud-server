@@ -3,9 +3,7 @@
 AMDGPU::AMDGPU(
     const std::string& drm_node, const std::string& pci_dev,
     uint16_t vendor_id, uint16_t device_id
-) : GPU(drm_node, pci_dev, vendor_id, device_id), FDInfo(drm_node) {
-    pthread_setname_np(worker_thread.native_handle(), "gpu-amdgpu");
-
+) : GPU(drm_node, pci_dev, vendor_id, device_id, "gpu-amdgpu"), FDInfo(drm_node) {
     sysfs_hwmon.base_dir = "/sys/class/drm/" + drm_node + "/device";
     sysfs_hwmon.setup(sysfs_sensors);
 }

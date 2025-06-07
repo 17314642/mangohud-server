@@ -3,8 +3,7 @@
 Intel::Intel(
     const std::string& drm_node, const std::string& pci_dev,
     uint16_t vendor_id, uint16_t device_id
-) : GPU(drm_node, pci_dev, vendor_id, device_id), FDInfo(drm_node) {
-    pthread_setname_np(worker_thread.native_handle(), "gpu-intel");
+) : GPU(drm_node, pci_dev, vendor_id, device_id, "gpu-intel"), FDInfo(drm_node) {
     hwmon.setup(sensors, drm_node);
 }
 

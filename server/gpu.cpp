@@ -3,6 +3,7 @@
 #include "gpu.hpp"
 #include "intel.hpp"
 #include "amdgpu.hpp"
+#include "nvidia.hpp"
 #include "../common/helpers.hpp"
 
 GPUS::GPUS() {
@@ -74,11 +75,25 @@ GPUS::GPUS() {
             gpu = std::make_shared<Intel>(drm_node, pci_dev, vendor_id, device_id);
         } else if (vendor_id == 0x1002) {
             gpu = std::make_shared<AMDGPU>(drm_node, pci_dev, vendor_id, device_id);
+        } else if (vendor_id == 0x10de) {
+            gpu = std::make_shared<Nvidia>(drm_node, pci_dev, vendor_id, device_id);
+
+            if (Nvidia* ptr = dynamic_cast<Nvidia*>(gpu.get())) {
+                if (!ptr->nvml_available) {
+                    SPDLOG_WARN(
+                        "NVML is not loaded. Nvidia metrics are not available!. "
+                        "Skipping node {}.", drm_node
+                    );
+
+                    continue;
+                }
+            }
         } else {
             continue;
         }
 
         available_gpus.push_back(gpu);
+        gpu->start_thread_worker();
 
         // if (params->gpu_list.size() == 1 && params->gpu_list[0] == idx++)
         //     gpu->is_active = true;
@@ -212,10 +227,9 @@ void GPU::poll() {
 
 GPU::GPU(
     const std::string& drm_node, const std::string& pci_dev,
-    uint16_t vendor_id, uint16_t device_id
-) : drm_node(drm_node), pci_dev(pci_dev), vendor_id(vendor_id), device_id(device_id) {
-    worker_thread = std::thread(&GPU::poll, this);
-}
+    uint16_t vendor_id, uint16_t device_id, const std::string& thread_name
+) : drm_node(drm_node), pci_dev(pci_dev), vendor_id(vendor_id),
+    device_id(device_id), worker_thread_name(thread_name) {}
 
 GPU::~GPU() {
     stop_thread = true;
@@ -291,4 +305,9 @@ void GPU::print_metrics() {
     }
 
     SPDLOG_TRACE("==========================\n");
+}
+
+void GPU::start_thread_worker() {
+    worker_thread = std::thread(&GPU::poll, this);
+    pthread_setname_np(worker_thread.native_handle(), worker_thread_name.c_str());
 }

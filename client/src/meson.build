@@ -30,7 +30,7 @@ vk_layer_static_lib = static_library(
     link_args : link_args
 )
 
-vk_layer_shared_lib = shared_library(
+shared_library(
   'vk-layer',
   objects: vk_layer_static_lib.extract_all_objects(recursive: true),
   link_with: vk_layer_static_lib,

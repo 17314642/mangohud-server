@@ -4,6 +4,8 @@ src = [
     'hwmon.cpp',
     'intel.cpp',
     'amdgpu.cpp',
+    'nvidia.cpp',
+    'nvml_loader.cpp',
     'main.cpp',
     '../common/helpers.cpp',
     '../common/socket.cpp'
