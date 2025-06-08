@@ -10,6 +10,7 @@
 #include <sys/un.h>
 #include <poll.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "gpu.hpp"
 #include "fdinfo.hpp"
@@ -68,6 +69,14 @@ int main() {
     if (ret < 0) {
         LOG_UNIX_ERRNO_ERROR("Failed to listen to socket.");
         return -1;
+    }
+
+    if (getuid() == 0) {
+        ret = chmod(socket_path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+        if (ret < 0) {
+            LOG_UNIX_ERRNO_ERROR("Failed to make socket available to everyone.");
+            return -1;
+        }
     }
 
     std::vector<pollfd> poll_fds = {

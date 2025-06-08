@@ -1,9 +1,9 @@
 #include <algorithm>
 
 #include "gpu.hpp"
-#include "intel.hpp"
+#include "intel/i915.hpp"
 #include "amdgpu/amdgpu.hpp"
-#include "nvidia.hpp"
+#include "nvidia/nvidia.hpp"
 #include "../common/helpers.hpp"
 
 GPUS::GPUS() {
@@ -36,7 +36,22 @@ GPUS::GPUS() {
     uint8_t /*idx = 0,*/ total_active = 0;
 
     for (const auto& drm_node : gpu_entries) {
-        std::string path = "/sys/class/drm/" + drm_node;
+        const std::string path = "/sys/class/drm/" + drm_node;
+        const std::string driver = get_driver(path);
+
+         {
+            const std::string* d =
+                std::find(std::begin(supported_drivers), std::end(supported_drivers), driver);
+
+            if (d == std::end(supported_drivers)) {
+                SPDLOG_WARN(
+                    "node \"{}\" is using driver \"{}\" which is unsupported by MangoHud. Skipping...",
+                    drm_node, driver
+                );
+                continue;
+            }
+        }
+
         std::string device_address = get_pci_device_address(path);  // Store the result
         const char* pci_dev = device_address.c_str();
 
@@ -58,21 +73,10 @@ GPUS::GPUS() {
             }
         }
 
-        if (!vendor_id) {
-            auto line = read_line("/sys/class/drm/" + drm_node + "/device/uevent" );
-            if (line.find("DRIVER=msm_dpu") != std::string::npos) {
-                SPDLOG_DEBUG("MSM device found!");
-                vendor_id = 0x5143;
-            } else if (line.find("DRIVER=panfrost") != std::string::npos) {
-                SPDLOG_DEBUG("Panfrost device found!");
-                vendor_id = 0x1337; // what's panfrost vid?
-            }
-        }
-
         std::shared_ptr<GPU> gpu;
 
-        if (vendor_id == 0x8086) {
-            gpu = std::make_shared<Intel>(drm_node, pci_dev, vendor_id, device_id);
+        if (driver == "i915") {
+            gpu = std::make_shared<Intel_i915>(drm_node, pci_dev, vendor_id, device_id);
         } else if (vendor_id == 0x1002) {
             gpu = std::make_shared<AMDGPU>(drm_node, pci_dev, vendor_id, device_id);
         } else if (vendor_id == 0x10de) {
@@ -145,6 +149,25 @@ std::string GPUS::get_pci_device_address(const std::string& drm_card_path) {
                                    //         |- find this guy
 
     return pci_addr.substr(idx); // 0000:03:00.0
+}
+
+std::string GPUS::get_driver(const std::string& drm_card_path) {
+    std::string path = drm_card_path + "/device/driver";
+
+    if (!fs::exists(path)) {
+        SPDLOG_ERROR("{} doesn't exist", path);
+        return "";
+    }
+
+    if (!fs::is_symlink(path)) {
+        SPDLOG_ERROR("{} is not a symlink (it should be)", path);
+        return "";
+    }
+
+    std::string driver = fs::read_symlink(path).string();
+    driver = driver.substr(driver.rfind("/") + 1);
+
+    return driver;
 }
 
 void GPU::check_pids_existence() {

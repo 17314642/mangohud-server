@@ -98,8 +98,10 @@ void FDInfoBase::open_fds(const std::vector<std::string>& fds) {
 
         std::ifstream file(p);
 
-        if (!file.is_open())
+        if (!file.is_open()) {
+            SPDLOG_TRACE("failed to open \"{}\"", p.string());
             continue;
+        }
 
         for (std::string line; std::getline(file, line);) {
             std::string key = line.substr(0, line.find(":"));
