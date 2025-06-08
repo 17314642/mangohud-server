@@ -2,10 +2,10 @@
 
 #define NVML_NO_UNVERSIONED_FUNC_DEFS
 
-#include <nvml.h>
 #include <string>
 #include <memory>
 #include <atomic>
+#include "nvml.h"
 
 class libnvml_loader {
 public:
