@@ -1,0 +1,12 @@
+diff --git a/server/intel/i915_drm.cpp b/server/intel/i915_drm.cpp
+index 0ea9541..bb28caf 100644
+--- a/server/intel/i915_drm.cpp
++++ b/server/intel/i915_drm.cpp
+@@ -1,6 +1,6 @@
+ #include <stdio.h>
+ #include <stdint.h>
+-#include <drm/i915_drm.h>
++#include <libdrm/i915_drm.h>
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <assert.h>
