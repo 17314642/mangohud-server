@@ -18,14 +18,14 @@ bool Nvidia::init_nvml(const std::string& pci_dev) {
     if (!nvml->is_loaded())
         return false;
 
-    nvmlReturn_t result = nvml->nvmlInit();
+    nvmlReturn_t result = nvml->nvmlInit_v2();
     
     if (NVML_SUCCESS != result) {
         SPDLOG_ERROR("Nvidia module initialization failed: {}", nvml->nvmlErrorString(result));
         return false;
     }
 
-    result = nvml->nvmlDeviceGetHandleByPciBusId(pci_dev.c_str(), &device);
+    result = nvml->nvmlDeviceGetHandleByPciBusId_v2(pci_dev.c_str(), &device);
     
     if (NVML_SUCCESS != result) {
         SPDLOG_ERROR("Getting device handle by PCI bus ID failed: {}", nvml->nvmlErrorString(result));
@@ -35,26 +35,22 @@ bool Nvidia::init_nvml(const std::string& pci_dev) {
     return true;
 }
 
-Nvidia::nvml_proc_info Nvidia::get_processes() {
+const std::vector<nvmlProcessInfo_v1_t> Nvidia::get_processes() {
     unsigned int info_count = 0;
 
-    nvmlProcessInfo_t* cur_process_info = new nvmlProcessInfo_t[info_count];
-    nvmlReturn_t ret = nvml->nvmlDeviceGetGraphicsRunningProcesses(device, &info_count, cur_process_info);
-
-    delete[] cur_process_info;
+    std::vector<nvmlProcessInfo_v1_t> cur_process_info(info_count);
+    nvmlReturn_t ret = nvml->nvmlDeviceGetGraphicsRunningProcesses(device, &info_count, cur_process_info.data());
 
     if (ret != NVML_ERROR_INSUFFICIENT_SIZE)
-        return { nullptr, 0 };
+        return {};
 
-    cur_process_info = new nvmlProcessInfo_t[info_count];
-    ret = nvml->nvmlDeviceGetGraphicsRunningProcesses(device, &info_count, cur_process_info);
+    cur_process_info.resize(info_count);
+    ret = nvml->nvmlDeviceGetGraphicsRunningProcesses(device, &info_count, cur_process_info.data());
 
-    if (ret != NVML_SUCCESS) {
-        delete[] cur_process_info;
-        return { nullptr, 0 };
-    }
+    if (ret != NVML_SUCCESS)
+        return {};
 
-    return { cur_process_info, info_count };
+    return cur_process_info;
 }
 
 int Nvidia::get_load() {
@@ -191,18 +187,16 @@ bool Nvidia::get_fan_rpm() {
 }
 
 float Nvidia::get_process_vram_used(pid_t pid) {
-    Nvidia::nvml_proc_info info = get_processes();
+    const std::vector<nvmlProcessInfo_v1_t> info = get_processes();
     float used_memory = 0.f;
 
-    for (size_t i = 0; i < info.second; i++) {
-        if (static_cast<pid_t>(info.first[i].pid) != pid)
+    for (const nvmlProcessInfo_v1_t& proc : info) {
+        if (static_cast<pid_t>(proc.pid) != pid)
             continue;
 
-        used_memory = info.first[i].usedGpuMemory / 1024.f / 1024.f / 1024.f;
+        used_memory = proc.usedGpuMemory / 1024.f / 1024.f / 1024.f;
         break;
     }
-
-    delete[] info.first;
 
     return used_memory;
 }

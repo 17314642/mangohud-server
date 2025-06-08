@@ -11,8 +11,7 @@ private:
     nvmlDevice_t device = nullptr;
     bool init_nvml(const std::string& pci_dev);
 
-    typedef std::pair<nvmlProcessInfo_t*, size_t> nvml_proc_info;
-    nvml_proc_info get_processes();
+    const std::vector<nvmlProcessInfo_v1_t> get_processes();
 
 public:
     Nvidia(

@@ -1,5 +1,7 @@
 #pragma once
 
+#define NVML_NO_UNVERSIONED_FUNC_DEFS
+
 #include <nvml.h>
 #include <string>
 #include <memory>
