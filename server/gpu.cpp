@@ -1,7 +1,8 @@
 #include <algorithm>
 
 #include "gpu.hpp"
-#include "intel/i915.hpp"
+#include "intel/i915/i915.hpp"
+#include "intel/xe/xe.hpp"
 #include "amdgpu/amdgpu.hpp"
 #include "nvidia/nvidia.hpp"
 #include "../common/helpers.hpp"
@@ -77,9 +78,11 @@ GPUS::GPUS() {
 
         if (driver == "i915") {
             gpu = std::make_shared<Intel_i915>(drm_node, pci_dev, vendor_id, device_id);
-        } else if (vendor_id == 0x1002) {
+        } else if (driver == "xe") {
+            gpu = std::make_shared<Intel_xe>(drm_node, pci_dev, vendor_id, device_id);
+        } else if (driver == "amdgpu") {
             gpu = std::make_shared<AMDGPU>(drm_node, pci_dev, vendor_id, device_id);
-        } else if (vendor_id == 0x10de) {
+        } else if (driver == "nvidia") {
             gpu = std::make_shared<Nvidia>(drm_node, pci_dev, vendor_id, device_id);
 
             if (Nvidia* ptr = dynamic_cast<Nvidia*>(gpu.get())) {

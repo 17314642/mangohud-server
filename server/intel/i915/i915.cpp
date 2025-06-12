@@ -154,8 +154,8 @@ void Intel_i915::find_gt_dir() {
 
     // Assuming gt0 since all recent GPUs have the RCS engine on gt0,
     // and latest GPUs need Xe anyway
-    auto throttle_folder = gt_dir + "/gt/gt0/throttle_";
-    auto throttle_status_path = throttle_folder + "reason_status";
+    std::string throttle_folder = gt_dir + "/gt/gt0/throttle_";
+    std::string throttle_status_path = throttle_folder + "reason_status";
 
     ifs_throttle_status.open(throttle_status_path);
 
@@ -175,16 +175,19 @@ void Intel_i915::load_throttle_reasons(
 ) {
     for (const auto& throttle_reason : throttle_reasons) {
         std::string throttle_path = throttle_folder + throttle_reason;
+
         if (!fs::exists(throttle_path)) {
             SPDLOG_WARN(
-                "Intel xe/i915 gt dir: Throttle file {} not found",
+                "Throttle file {} not found",
                 throttle_path
             );
             continue;
         }
-        auto throttle_stream = std::ifstream(throttle_path);
+
+        std::ifstream throttle_stream(throttle_path);
+
         if (!throttle_stream.good()) {
-            SPDLOG_WARN("Intel xe/i915 gt dir: failed to open {}", throttle_path);
+            SPDLOG_WARN("failed to open {}", throttle_path);
             continue;
         }
 

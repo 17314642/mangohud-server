@@ -9,7 +9,7 @@
 
 #include <spdlog/spdlog.h>
 #include "i915_drm.hpp"
-#include "../../common/log_errno.hpp"
+#include "../../../common/log_errno.hpp"
 
 static int intel_ioctl(int fd, unsigned long request, void *arg) {
     int ret;
