@@ -1,5 +1,7 @@
 #include <chrono>
 #include <thread>
+#include <sstream>
+#include <cctype>
 #include <spdlog/spdlog.h>
 
 #include <poll.h>
@@ -15,6 +17,7 @@ using namespace std::chrono_literals;
 
 std::mutex metrics_lock;
 mangohud_message metrics = {};
+std::set<uint8_t> gpu_list;
 
 bool create_socket(int& sock) {
     sock = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
@@ -131,10 +134,30 @@ void client_thread () {
     return;
 }
 
+void parse_options() {
+    char* gpu_list_env = getenv("GPU_LIST");
+
+    if (!gpu_list_env)
+        return;
+
+    std::istringstream iss(gpu_list_env);
+    std::string s;
+
+    while (getline(iss, s, ',' )) {
+        try {
+            uint8_t num = std::stoul(s);
+            gpu_list.emplace(num);
+        } catch(...) {
+            SPDLOG_WARN("Failed to convert \"{}\" to gpu number.", s);
+        }
+    }
+}
+
 void init_client() {
     spdlog::set_level(spdlog::level::level_enum::debug);
 
     SPDLOG_DEBUG("init_client()");
+    parse_options();
 
     std::thread t = std::thread(&client_thread);
     t.detach();

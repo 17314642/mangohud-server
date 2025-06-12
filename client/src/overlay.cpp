@@ -13,7 +13,10 @@ void draw_metrics() {
     if (!cur_metrics.num_of_gpus)
         ImGui::Text("Not connected to server.");
 
-    for (int i = 0; i < cur_metrics.num_of_gpus; i++) {
+    for (uint8_t i = 0; i < cur_metrics.num_of_gpus; i++) {
+        if (gpu_list.size() > 0 && gpu_list.find(i) == gpu_list.end())
+            continue;
+
         gpu& gpu = cur_metrics.gpus[i];
         gpu_metrics_system& system = gpu.system_metrics;
         gpu_metrics_process& process = gpu.process_metrics;
@@ -62,6 +65,9 @@ void draw_overlay() {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(300, 670), ImGuiCond_Always);
     ImGui::GetIO().FontGlobalScale = 0.6f;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.f, 0.f, 0.f, 0.4f);
 
     ImGui::Begin("metrics overlay");
     draw_metrics();
