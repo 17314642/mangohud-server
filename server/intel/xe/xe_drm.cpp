@@ -79,8 +79,8 @@ void xe_drm_base::poll() {
         total_memory = mr.total_size;
         used_memory  = mr.used;
 
-        SPDLOG_DEBUG("total_memory = {} MiB", total_memory / 1024.f / 1024.f);
-        SPDLOG_DEBUG("used_memory  = {} MiB", used_memory / 1024.f / 1024.f);
+        SPDLOG_TRACE("total_memory = {} MiB", total_memory / 1024.f / 1024.f);
+        SPDLOG_TRACE("used_memory  = {} MiB", used_memory / 1024.f / 1024.f);
 
         break;
     }
