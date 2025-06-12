@@ -4,7 +4,7 @@
 Intel_i915::Intel_i915(
     const std::string& drm_node, const std::string& pci_dev,
     uint16_t vendor_id, uint16_t device_id
-) : GPU(drm_node, pci_dev, vendor_id, device_id, "gpu-intel"), FDInfo(drm_node) {
+) : GPU(drm_node, pci_dev, vendor_id, device_id, "gpu-intel-i915"), FDInfo(drm_node) {
     hwmon.setup(sensors, drm_node);
     drm_available = drm.setup("/dev/dri/by-path/pci-" + pci_dev + "-card");
     find_gt_dir();
