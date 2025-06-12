@@ -5,6 +5,7 @@
 #include "intel/xe/xe.hpp"
 #include "amdgpu/amdgpu.hpp"
 #include "nvidia/nvidia.hpp"
+#include "panfrost.hpp"
 #include "../common/helpers.hpp"
 
 GPUS::GPUS() {
@@ -95,6 +96,8 @@ GPUS::GPUS() {
                     continue;
                 }
             }
+        } else if (driver == "panfrost") {
+            gpu = std::make_shared<Panfrost>(drm_node, pci_dev, vendor_id, device_id);
         } else {
             continue;
         }

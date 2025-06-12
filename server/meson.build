@@ -10,6 +10,7 @@ src = [
     'amdgpu/gpu_metrics.cpp',
     'nvidia/nvidia.cpp',
     'nvidia/nvml_loader.cpp',
+    'panfrost.cpp',
     'main.cpp',
     '../common/helpers.cpp',
     '../common/socket.cpp'
