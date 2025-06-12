@@ -16,8 +16,32 @@
 #include "fdinfo.hpp"
 #include "../common/socket.hpp"
 
+spdlog::level::level_enum get_log_level() {
+    const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
+
+    if (!ch_log_level)
+        return spdlog::level::debug;
+
+    const std::string log_level(ch_log_level);
+
+    if (log_level == "trace")
+        return spdlog::level::trace;
+    else if (log_level == "debug")
+        return spdlog::level::debug;
+    else if (log_level == "info")
+        return spdlog::level::info;
+    else if (log_level == "warn")
+        return spdlog::level::warn;
+    else if (log_level == "err")
+        return spdlog::level::critical;
+    else if (log_level == "off")
+        return spdlog::level::off;
+    else
+        return spdlog::level::debug;
+}
+
 int main() {
-    spdlog::set_level(spdlog::level::level_enum::debug);
+    spdlog::set_level(get_log_level());
 
     std::string socket_path = get_socket_path();
 

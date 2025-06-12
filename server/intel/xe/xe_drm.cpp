@@ -61,6 +61,7 @@ static bool is_capability_available(int capability) {
 
 xe_drm_base::xe_drm_base() {
     has_cap_perfmon = is_capability_available(CAP_PERFMON);
+    SPDLOG_DEBUG("has_cap_perfmon = {}", has_cap_perfmon);
 }
 
 bool xe_drm_base::setup(const std::string& card) {

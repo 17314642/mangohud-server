@@ -108,10 +108,10 @@ GPUS::GPUS() {
         // if (!params->pci_dev.empty() && pci_dev == params->pci_dev)
         //     gpu->is_active = true;
 
-        SPDLOG_DEBUG("GPU Found: drm_node: {}, vendor_id: {:x} device_id: {:x} pci_dev: {}", drm_node, vendor_id, device_id, pci_dev);
+        SPDLOG_DEBUG("GPU Found: drm_node: {}, driver: {}, vendor_id: {:x} device_id: {:x} pci_dev: {}", drm_node, driver, vendor_id, device_id, pci_dev);
 
         if (gpu->is_active) {
-            SPDLOG_INFO("Set {} as active GPU (id={:x}:{:x} pci_dev={})", drm_node, vendor_id, device_id, pci_dev);
+            SPDLOG_INFO("Set {} as active GPU (driver={} id={:x}:{:x} pci_dev={})", drm_node, driver, vendor_id, device_id, pci_dev);
             total_active++;
         }
     }

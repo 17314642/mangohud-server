@@ -84,6 +84,7 @@ static bool is_capability_available(int capability) {
 
 i915_drm_base::i915_drm_base() {
     has_cap_perfmon = is_capability_available(CAP_PERFMON);
+    SPDLOG_DEBUG("has_cap_perfmon = {}", has_cap_perfmon);
 }
 
 bool i915_drm_base::setup(const std::string& card) {
