@@ -108,7 +108,7 @@ uint64_t xe_drm_base::get_total_memory() const {
 }
 
 uint64_t xe_drm_base::get_used_memory() const {
-    if (!has_cap_perfmon || getuid() != 0)
+    if (!has_cap_perfmon && getuid() != 0)
         return 0;
 
     return used_memory;
