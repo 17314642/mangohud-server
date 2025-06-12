@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <drm/xe_drm.h>
+#include "include/xe_drm.h" // change this when libdrm-dev adds xe_drm.h
 #include <errno.h>
 #include <stdlib.h>
 #include <assert.h>

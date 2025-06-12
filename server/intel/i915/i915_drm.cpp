@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <drm/i915_drm.h>
+#include <libdrm/i915_drm.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <assert.h>

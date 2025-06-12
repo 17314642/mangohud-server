@@ -15,4 +15,6 @@ src = [
     '../common/socket.cpp'
 ]
 
-executable('mangohud-server', src, dependencies: spdlog_dep, install: true)
+libdrm_dep = dependency('libdrm')
+
+executable('mangohud-server', src, dependencies: [spdlog_dep, libdrm_dep], install: true)
