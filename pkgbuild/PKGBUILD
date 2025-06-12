@@ -8,18 +8,11 @@ makedepends=('ninja' 'meson' 'python-mako' 'glslang' 'pkgconf' 'gcc' 'libdrm' 'p
 license=('MIT')
 source=(
     "mangohud-2"::"git+${url}"
-    "change-drm-include-dir.patch"
 )
 
 sha256sums=(
     'SKIP'
-    'dc96219a9b1f207add6730f620fa04a2aa2101b7551d1249b5be57ff92c29976'
 )
-
-prepare() {
-    cd "$srcdir/$pkgname"
-    patch -p1 < ../change-drm-include-dir.patch
-}
 
 build() {
     cd "$srcdir/$pkgname"

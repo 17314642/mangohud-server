@@ -1,3 +1,7 @@
+#### Building on Arch Linux
+1. Download PKGBUILD from `pkgbuild` directory
+2. `makepkg -si`
+
 #### Dependencies
 1. C and C++ compiler
 2. Meson
