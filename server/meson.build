@@ -16,5 +16,9 @@ src = [
 ]
 
 libdrm_dep = dependency('libdrm')
+libcap_dep = dependency('libcap')
 
-executable('mangohud-server', src, dependencies: [spdlog_dep, libdrm_dep], install: true)
+executable(
+    'mangohud-server', src,
+    dependencies: [spdlog_dep, libdrm_dep, libcap_dep], install: true
+)

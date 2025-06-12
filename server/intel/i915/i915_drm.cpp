@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/capability.h>
+#include <unistd.h>
 
 #include <spdlog/spdlog.h>
 #include "i915_drm.hpp"
@@ -70,7 +72,19 @@ static std::vector<void*> intel_i915_query_alloc(int fd, uint64_t query_id, int3
     return data;
 }
 
-i915_drm_base::i915_drm_base() {}
+static bool is_capability_available(int capability) {
+    cap_t cap = cap_get_proc();
+    cap_flag_value_t cap_enabled = {};
+
+    cap_get_flag(cap, capability, CAP_EFFECTIVE, &cap_enabled);
+    cap_free(cap);
+
+    return static_cast<bool>(cap_enabled);
+}
+
+i915_drm_base::i915_drm_base() {
+    has_cap_perfmon = is_capability_available(CAP_PERFMON);
+}
 
 bool i915_drm_base::setup(const std::string& card) {
     card_fd = open(card.c_str(), O_WRONLY);
@@ -122,6 +136,9 @@ uint64_t i915_drm_base::get_total_memory() const {
 }
 
 uint64_t i915_drm_base::get_used_memory() const {
+    if (!has_cap_perfmon || getuid() != 0)
+        return 0;
+
     return used_memory;
 }
 

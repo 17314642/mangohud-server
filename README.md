@@ -6,7 +6,7 @@
 1. C and C++ compiler
 2. Meson
 3. Ninja
-4. `apt install python3-mako glslang-tools libdrm-dev`
+4. `apt install python3-mako glslang-tools libdrm-dev libcap-dev`
 
 #### Compilation
 

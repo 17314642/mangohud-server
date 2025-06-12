@@ -1,5 +1,4 @@
 #include <filesystem>
-#include <unistd.h>
 #include "i915.hpp"
 
 Intel_i915::Intel_i915(
@@ -19,7 +18,7 @@ void Intel_i915::pre_poll_overrides() {
 }
 
 float Intel_i915::get_vram_used() {
-    if (!drm_available || getuid() != 0)
+    if (!drm_available)
         return 0.f;
 
     return drm.get_used_memory() / 1024.f / 1024.f / 1024.f;
