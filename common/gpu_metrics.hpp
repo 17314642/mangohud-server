@@ -1,14 +1,12 @@
 #pragma once
 
-#include <stdint.h>
-
-struct gpu_metrics_process {
+struct gpu_metrics_process_t {
     int     load;
     float   vram_used;
     float   gtt_used;
 };
 
-struct gpu_metrics_system {
+struct gpu_metrics_system_t {
     int     load;
 
     float   vram_used;
@@ -38,14 +36,25 @@ struct gpu_metrics_system {
     bool    fan_rpm;
 };
 
-struct gpu {
+struct gpu_t {
     bool is_active;
 
-    gpu_metrics_process process_metrics;
-    gpu_metrics_system system_metrics;
+    gpu_metrics_process_t process_metrics;
+    gpu_metrics_system_t system_metrics;
+};
+
+struct memory_t {
+    float used      = 0;
+    float total     = 0;
+    float swap_used = 0;
+
+    float process_resident  = 0;
+    float process_shared    = 0;
+    float process_virtual   = 0;
 };
 
 struct mangohud_message {
     uint8_t num_of_gpus;
-    gpu gpus[8];
+    gpu_t gpus[8];
+    memory_t memory;
 };

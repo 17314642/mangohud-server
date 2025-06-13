@@ -10,16 +10,29 @@ void draw_metrics() {
         cur_metrics = metrics;
     }
 
-    if (!cur_metrics.num_of_gpus)
+    if (!cur_metrics.num_of_gpus) {
         ImGui::Text("Not connected to server.");
+        return;
+    }
+
+    ImGui::Text("RAM:");
+    ImGui::Text("  Used     : %.1f GB", cur_metrics.memory.used);
+    ImGui::Text("  Total    : %.1f GB", cur_metrics.memory.total);
+    ImGui::Text("  Swap used: %.1f GB", cur_metrics.memory.swap_used);
+    ImGui::NewLine();
+    ImGui::Text("  Process:");
+    ImGui::Text("    Resident: %.1f GB", cur_metrics.memory.process_resident);
+    ImGui::Text("    Shared  : %.1f GB", cur_metrics.memory.process_shared);
+    ImGui::Text("    Virtual : %.1f GB", cur_metrics.memory.process_virtual);
+    ImGui::NewLine();
 
     for (uint8_t i = 0; i < cur_metrics.num_of_gpus; i++) {
         if (gpu_list.size() > 0 && gpu_list.find(i) == gpu_list.end())
             continue;
 
-        gpu& gpu = cur_metrics.gpus[i];
-        gpu_metrics_system& system = gpu.system_metrics;
-        gpu_metrics_process& process = gpu.process_metrics;
+        gpu_t& gpu = cur_metrics.gpus[i];
+        gpu_metrics_system_t& system = gpu.system_metrics;
+        gpu_metrics_process_t& process = gpu.process_metrics;
 
         ImGui::Text("GPU %d:", i);
         ImGui::Text("  Process:");
@@ -63,7 +76,7 @@ void draw_overlay() {
     ImGui::NewFrame();
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2(300, 670), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(300, 860), ImGuiCond_Always);
     ImGui::GetIO().FontGlobalScale = 0.6f;
 
     ImGuiStyle& style = ImGui::GetStyle();

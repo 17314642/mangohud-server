@@ -40,13 +40,13 @@ public:
     void print_metrics();
     void start_thread_worker();
 
-    virtual gpu_metrics_system get_system_metrics();
-    virtual std::map<pid_t, gpu_metrics_process> get_process_metrics();
-    virtual gpu_metrics_process get_process_metrics(const size_t pid);
+    virtual gpu_metrics_system_t get_system_metrics();
+    virtual std::map<pid_t, gpu_metrics_process_t> get_process_metrics();
+    virtual gpu_metrics_process_t get_process_metrics(const size_t pid);
 
 protected:
-    gpu_metrics_system system_metrics = {};
-    std::map<pid_t, gpu_metrics_process> process_metrics;
+    gpu_metrics_system_t system_metrics = {};
+    std::map<pid_t, gpu_metrics_process_t> process_metrics;
 
     std::mutex system_metrics_mutex, process_metrics_mutex;
 

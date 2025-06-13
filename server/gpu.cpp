@@ -206,7 +206,7 @@ void GPU::poll() {
 
         pre_poll_overrides();
 
-        gpu_metrics_system cur_sys_metrics = {
+        gpu_metrics_system_t cur_sys_metrics = {
             .load                   = get_load(),
 
             .vram_used              = get_vram_used(),
@@ -238,11 +238,11 @@ void GPU::poll() {
 
         check_pids_existence();
 
-        std::map<pid_t, gpu_metrics_process> cur_proc_metrics = process_metrics;
+        std::map<pid_t, gpu_metrics_process_t> cur_proc_metrics = process_metrics;
 
         for (auto& p : cur_proc_metrics) {
             pid_t pid = p.first;
-            gpu_metrics_process* m = &p.second;
+            gpu_metrics_process_t* m = &p.second;
 
             m->load = get_process_load(pid);
             m->vram_used = get_process_vram_used(pid);
@@ -274,22 +274,22 @@ GPU::~GPU() {
 
 void GPU::add_pid(pid_t pid) {
     std::unique_lock lock(process_metrics_mutex);
-    process_metrics.try_emplace(pid, gpu_metrics_process());
+    process_metrics.try_emplace(pid, gpu_metrics_process_t());
 }
 
-gpu_metrics_system GPU::get_system_metrics() {
+gpu_metrics_system_t GPU::get_system_metrics() {
     SPDLOG_TRACE("GPU get_system_metrics()");
     std::unique_lock lock(system_metrics_mutex);
     return system_metrics;
 }
 
-std::map<pid_t, gpu_metrics_process> GPU::get_process_metrics() {
+std::map<pid_t, gpu_metrics_process_t> GPU::get_process_metrics() {
     SPDLOG_TRACE("GPU get_process_metrics");
     std::unique_lock lock(process_metrics_mutex);
     return process_metrics;
 }
 
-gpu_metrics_process GPU::get_process_metrics(const size_t pid) {
+gpu_metrics_process_t GPU::get_process_metrics(const size_t pid) {
     SPDLOG_TRACE("GPU get_process_metrics");
     std::unique_lock lock(process_metrics_mutex);
     return process_metrics[pid];
@@ -332,7 +332,7 @@ void GPU::print_metrics() {
 
     for (const auto& p : process_metrics) {
         pid_t pid = p.first;
-        gpu_metrics_process m = p.second;
+        gpu_metrics_process_t m = p.second;
         SPDLOG_TRACE("    {}:", pid);
         SPDLOG_TRACE("        load      = {}", m.load);
         SPDLOG_TRACE("        vram_used = {}", m.vram_used);

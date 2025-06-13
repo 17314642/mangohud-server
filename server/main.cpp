@@ -15,6 +15,7 @@
 #include "gpu.hpp"
 #include "fdinfo.hpp"
 #include "../common/socket.hpp"
+#include "memory.hpp"
 
 spdlog::level::level_enum get_log_level() {
     const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
@@ -107,11 +108,23 @@ int main() {
         { .fd = sock, .events = POLLIN }
     };
 
-    std::chrono::time_point<std::chrono::steady_clock> previous_time;
-
     GPUS gpus;
+    std::map<std::string, float> ram_stats;
+
+    std::chrono::time_point<std::chrono::steady_clock> previous_ram_update_time;
+
+    std::map<pid_t, std::chrono::time_point<std::chrono::steady_clock>> proc_mem_last_update_time;
+    std::map<pid_t, std::map<std::string, float>> proc_mem_stats;
 
     while (true) {
+        std::chrono::time_point<std::chrono::steady_clock> cur_time =
+            std::chrono::steady_clock().now();
+
+        if (cur_time - previous_ram_update_time > 1s) {
+            ram_stats = get_ram_info();
+            previous_ram_update_time = cur_time;
+        }
+
         ret = poll(poll_fds.data(), poll_fds.size(), 1000);
 
         if (ret < 0) {
@@ -163,10 +176,27 @@ int main() {
                     mangohud_message msg = {};
 
                     // TODO: move this somewhere else so it's not called bazillion times
-                    for (auto& gpu : gpus.available_gpus) {
+                    for (std::shared_ptr<GPU>& gpu : gpus.available_gpus) {
                         msg.gpus[msg.num_of_gpus].process_metrics = gpu->get_process_metrics(pid);
                         msg.gpus[msg.num_of_gpus].system_metrics = gpu->get_system_metrics();
                         msg.num_of_gpus++;
+
+                        if (cur_time - proc_mem_last_update_time[pid] > 1s) {
+                            proc_mem_stats[pid] = get_process_memory(pid);
+                            proc_mem_last_update_time[pid] = cur_time;
+                        }
+
+                        memory_t cur_mem_stats = {
+                            .used      = ram_stats["used"],
+                            .total     = ram_stats["total"],
+                            .swap_used = ram_stats["swap_used"],
+
+                            .process_resident = proc_mem_stats[pid]["resident"],
+                            .process_shared   = proc_mem_stats[pid]["shared"],
+                            .process_virtual  = proc_mem_stats[pid]["virtual"]
+                        };
+
+                        msg.memory = cur_mem_stats;
                     }
 
                     send_message(fd->fd, msg);
