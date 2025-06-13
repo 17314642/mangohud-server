@@ -1,3 +1,5 @@
+#pragma once
+
 #include <mutex>
 #include <set>
 #include "../../common/gpu_metrics.hpp"

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 struct gpu_metrics_process {
     int     load;
     float   vram_used;
