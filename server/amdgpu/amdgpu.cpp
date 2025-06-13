@@ -6,7 +6,7 @@ AMDGPU::AMDGPU(
 ) : GPU(drm_node, pci_dev, vendor_id, device_id, "gpu-amdgpu"),
     FDInfo(drm_node), AMDGPUMetrics(drm_node) 
 {
-    hwmon.setup(sensors);
+    hwmon.setup(sensors, drm_node);
 
     sysfs_hwmon.base_dir = "/sys/class/drm/" + drm_node + "/device";
     sysfs_hwmon.setup(sysfs_sensors);

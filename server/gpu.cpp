@@ -6,6 +6,8 @@
 #include "amdgpu/amdgpu.hpp"
 #include "nvidia/nvidia.hpp"
 #include "panfrost.hpp"
+#include "msm/dpu.hpp"
+#include "msm/kgsl.hpp"
 #include "../common/helpers.hpp"
 
 GPUS::GPUS() {
@@ -98,6 +100,10 @@ GPUS::GPUS() {
             }
         } else if (driver == "panfrost") {
             gpu = std::make_shared<Panfrost>(drm_node, pci_dev, vendor_id, device_id);
+        } else if (driver == "msm_dpu") {
+            gpu = std::make_shared<MSM_DPU>(drm_node, pci_dev, vendor_id, device_id);
+        } else if (driver == "msm_drm") {
+            gpu = std::make_shared<MSM_KGSL>(drm_node, pci_dev, vendor_id, device_id);
         } else {
             continue;
         }
@@ -338,5 +344,11 @@ void GPU::print_metrics() {
 
 void GPU::start_thread_worker() {
     worker_thread = std::thread(&GPU::poll, this);
+
+    if (worker_thread_name.length() > 15)
+        SPDLOG_DEBUG(
+            "thread name \"{}\" is longer than allowed linux maximum of 15 characters!"
+        );
+
     pthread_setname_np(worker_thread.native_handle(), worker_thread_name.c_str());
 }

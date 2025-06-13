@@ -11,6 +11,8 @@ src = [
     'nvidia/nvidia.cpp',
     'nvidia/nvml_loader.cpp',
     'panfrost.cpp',
+    'msm/dpu.cpp',
+    'msm/kgsl.cpp',
     'main.cpp',
     '../common/helpers.cpp',
     '../common/socket.cpp'
