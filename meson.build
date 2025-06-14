@@ -18,4 +18,4 @@ spdlog_dep = spdlog_sp.get_variable('spdlog_dep')
 add_project_arguments('-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE', language: 'cpp')
 
 subdir('server')
-subdir('client')
+#subdir('client')
