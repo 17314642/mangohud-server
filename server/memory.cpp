@@ -20,8 +20,8 @@ std::map<std::string, float> get_ram_info() {
     }
 
     for (std::string line; std::getline(file, line);) {
-        auto key = line.substr(0, line.find(":"));
-        auto val = line.substr(key.length() + 2);
+        std::string key = line.substr(0, line.find(":"));
+        std::string val = line.substr(key.length() + 2);
         meminfo[key] = std::stoull(val) / 1024.f / 1024.f;
     }
 
@@ -71,9 +71,9 @@ std::map<std::string, float> get_process_memory(pid_t pid)
         last_idx = idx + 1;
     }
 
-    ret["resident"] = meminfo[1] / 1024.f / 1024.f / 1024.f;
-    ret["shared"]   = meminfo[2] / 1024.f / 1024.f / 1024.f;
-    ret["virtual"]  = meminfo[0] / 1024.f / 1024.f / 1024.f;
+    ret["resident"] = meminfo[1];
+    ret["shared"]   = meminfo[2];
+    ret["virtual"]  = meminfo[0];
 
     return ret;
 }

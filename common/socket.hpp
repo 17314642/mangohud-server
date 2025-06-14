@@ -1,6 +1,5 @@
 #pragma once
 
-#include <sys/socket.h>
 #include "log_errno.hpp"
 #include "gpu_metrics.hpp"
 

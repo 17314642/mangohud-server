@@ -61,7 +61,7 @@ protected:
     void check_pids_existence();
 
     // System-related functions
-    virtual int     get_load()                  { return 0; }
+    virtual int     get_load()                  { return -1; }
 
     virtual float   get_vram_used()             { return 0.f; }
     virtual float   get_gtt_used()              { return 0.f; }

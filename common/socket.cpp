@@ -1,7 +1,7 @@
 #include "socket.hpp"
 #include <sys/socket.h>
 
-cmsghdr* get_cmsghdr(msghdr* message_header) {
+static cmsghdr* get_cmsghdr(msghdr* message_header) {
     cmsghdr* cmhp = CMSG_FIRSTHDR(message_header);
 
     if (cmhp == NULL) {
