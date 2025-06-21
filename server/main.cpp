@@ -16,6 +16,7 @@
 #include "fdinfo.hpp"
 #include "../common/socket.hpp"
 #include "memory.hpp"
+#include "cpu.hpp"
 
 spdlog::level::level_enum get_log_level() {
     const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
@@ -109,9 +110,10 @@ int main() {
     };
 
     GPUS gpus;
+    CPUWithRAPL cpu;
     std::map<std::string, float> ram_stats;
 
-    std::chrono::time_point<std::chrono::steady_clock> previous_ram_update_time;
+    std::chrono::time_point<std::chrono::steady_clock> last_stats_poll;
 
     std::map<pid_t, std::chrono::time_point<std::chrono::steady_clock>> proc_mem_last_update_time;
     std::map<pid_t, std::map<std::string, float>> proc_mem_stats;
@@ -120,9 +122,10 @@ int main() {
         std::chrono::time_point<std::chrono::steady_clock> cur_time =
             std::chrono::steady_clock().now();
 
-        if (cur_time - previous_ram_update_time > 1s) {
+        if (cur_time - last_stats_poll > 1s) {
+            cpu.poll();
             ram_stats = get_ram_info();
-            previous_ram_update_time = cur_time;
+            last_stats_poll = cur_time;
         }
 
         ret = poll(poll_fds.data(), poll_fds.size(), 1000);
@@ -166,6 +169,8 @@ int main() {
                 if (receive_message_with_creds(fd->fd, pid)) {
                     // TODO: only add_pid if doesn't exist already
                     // TODO: add timeout after which pid should be deleted from GPU
+                    // TODO: move code inside this clause somewhere else, so that it's called only
+                    //       once per interval and not everytime we receive a socket message
                     for (auto& gpu : gpus.available_gpus) {
                         gpu->add_pid(pid);
 
@@ -175,29 +180,44 @@ int main() {
 
                     mangohud_message msg = {};
 
-                    // TODO: move this somewhere else so it's not called bazillion times
+                    // ====START CPU INFO===========================================================
                     for (std::shared_ptr<GPU>& gpu : gpus.available_gpus) {
                         msg.gpus[msg.num_of_gpus].process_metrics = gpu->get_process_metrics(pid);
                         msg.gpus[msg.num_of_gpus].system_metrics = gpu->get_system_metrics();
                         msg.num_of_gpus++;
-
-                        if (cur_time - proc_mem_last_update_time[pid] > 1s) {
-                            proc_mem_stats[pid] = get_process_memory(pid);
-                            proc_mem_last_update_time[pid] = cur_time;
-                        }
-
-                        memory_t cur_mem_stats = {
-                            .used      = ram_stats["used"],
-                            .total     = ram_stats["total"],
-                            .swap_used = ram_stats["swap_used"],
-
-                            .process_resident = proc_mem_stats[pid]["resident"],
-                            .process_shared   = proc_mem_stats[pid]["shared"],
-                            .process_virtual  = proc_mem_stats[pid]["virtual"]
-                        };
-
-                        msg.memory = cur_mem_stats;
                     }
+                    // ====END GPU INFO=============================================================
+
+                    // ====START MEMORY INFO========================================================
+                    if (cur_time - proc_mem_last_update_time[pid] > 1s) {
+                        proc_mem_stats[pid] = get_process_memory(pid);
+                        proc_mem_last_update_time[pid] = cur_time;
+                    }
+
+                    memory_t cur_mem_stats = {
+                        .used      = ram_stats["used"],
+                        .total     = ram_stats["total"],
+                        .swap_used = ram_stats["swap_used"],
+
+                        .process_resident = proc_mem_stats[pid]["resident"],
+                        .process_shared   = proc_mem_stats[pid]["shared"],
+                        .process_virtual  = proc_mem_stats[pid]["virtual"]
+                    };
+
+                    msg.memory = cur_mem_stats;
+                    // ====END MEMORY INFO==========================================================
+
+                    // ====START CPU INFO===========================================================
+                    msg.cpu = cpu.get_info();
+
+                    uint16_t num_of_cores = 0;
+                    for (core_info_t core : cpu.get_core_info()) {
+                        msg.cores[num_of_cores] = core;
+                        num_of_cores++;
+                    }
+
+                    msg.num_of_cores = num_of_cores;
+                    // ====END CPU INFO=============================================================
 
                     send_message(fd->fd, msg);
                 }

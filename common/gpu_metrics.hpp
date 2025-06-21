@@ -53,8 +53,20 @@ struct memory_t {
     float process_virtual   = 0;
 };
 
+typedef struct core_info_t {
+   int load       = 0;
+   int frequency  = 0;
+   int temp       = 0;
+   float power    = 0.f;
+} cpu_info_t;
+
 struct mangohud_message {
     uint8_t num_of_gpus;
     gpu_t gpus[8];
+
     memory_t memory;
+
+    cpu_info_t cpu;
+    uint16_t num_of_cores;
+    core_info_t cores[1024];
 };

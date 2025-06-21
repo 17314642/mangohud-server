@@ -1,4 +1,5 @@
 src = [
+    'cpu.cpp',
     'memory.cpp',
     'fdinfo.cpp',
     'gpu.cpp',
