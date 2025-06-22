@@ -132,6 +132,14 @@ void CPU::poll_frequency() {
         cores[cur_core].frequency = std::round(std::stof(val));
         cur_core++;
     }
+
+    // cpu frequency is equal to maximum frequency of one of its cores
+    int max_frequency = 0;
+    for (core_info_t& core : cores)
+        if (core.frequency > max_frequency)
+            max_frequency = core.frequency;
+
+    info.frequency = max_frequency;
 }
 
 CPUWithRAPL::CPUWithRAPL() {
