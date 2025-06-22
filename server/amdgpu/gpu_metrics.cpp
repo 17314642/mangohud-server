@@ -25,49 +25,49 @@ bool AMDGPUMetricsBase::setup() {
 }
 
 void AMDGPUMetricsBase::poll() {
-	static std::vector<char> buf(max(sizeof(gpu_metrics_v1_3), sizeof(gpu_metrics_v2_4)));
-	const metrics_table_header* header = reinterpret_cast<metrics_table_header*>(buf.data());
+    static std::vector<char> buf(max(sizeof(gpu_metrics_v1_3), sizeof(gpu_metrics_v2_4)));
+    const metrics_table_header* header = reinterpret_cast<metrics_table_header*>(buf.data());
 
     ifs_gpu_metrics.clear();
-	ifs_gpu_metrics.seekg(0);
+    ifs_gpu_metrics.seekg(0);
     ifs_gpu_metrics.read(reinterpret_cast<char*>(buf.data()), buf.size());
     size_t bytes_read = ifs_gpu_metrics.gcount();
 
-	if (bytes_read < sizeof(metrics_table_header)) {
-		SPDLOG_DEBUG("Failed to read metrics header");
-		return;
-	}
+    if (bytes_read < sizeof(metrics_table_header)) {
+        SPDLOG_DEBUG("Failed to read metrics header");
+        return;
+    }
 
-	uint64_t indep_throttle_status = 0;
+    uint64_t indep_throttle_status = 0;
 
-	if (header->format_revision == 1) {
-		// Desktop GPUs
-		const gpu_metrics_v1_3* amdgpu_metrics = reinterpret_cast<gpu_metrics_v1_3*>(buf.data());
+    if (header->format_revision == 1) {
+        // Desktop GPUs
+        const gpu_metrics_v1_3* amdgpu_metrics = reinterpret_cast<gpu_metrics_v1_3*>(buf.data());
 
-		parse_metrics_v1_3(amdgpu_metrics);
+        parse_metrics_v1_3(amdgpu_metrics);
 
-		indep_throttle_status = amdgpu_metrics->indep_throttle_status;
+        indep_throttle_status = amdgpu_metrics->indep_throttle_status;
 
-		// RDNA 3 almost always shows the TEMP_HOTSPOT throtting flag,
-		// so clear that bit
-		indep_throttle_status &= ~(1ull << TEMP_HOTSPOT_BIT);
-	} else if (header->format_revision == 2) {
-		// APUs
-		const gpu_metrics_v2_3* amdgpu_metrics = reinterpret_cast<gpu_metrics_v2_3*>(buf.data());
+        // RDNA 3 almost always shows the TEMP_HOTSPOT throtting flag,
+        // so clear that bit
+        indep_throttle_status &= ~(1ull << TEMP_HOTSPOT_BIT);
+    } else if (header->format_revision == 2) {
+        // APUs
+        const gpu_metrics_v2_3* amdgpu_metrics = reinterpret_cast<gpu_metrics_v2_3*>(buf.data());
 
-		parse_metrics_v2_3(amdgpu_metrics, header->content_revision);
+        parse_metrics_v2_3(amdgpu_metrics, header->content_revision);
 
-		if(header->content_revision >= 2)
-			indep_throttle_status = amdgpu_metrics->indep_throttle_status;
-	}
+        if(header->content_revision >= 2)
+            indep_throttle_status = amdgpu_metrics->indep_throttle_status;
+    }
 
-	/* Throttling: See
-	https://elixir.bootlin.com/linux/latest/source/drivers/gpu/drm/amd/pm/swsmu/inc/amdgpu_smu.h
-	for the offsets */
-	metrics.is_power_throttled      = ((indep_throttle_status >> 0)  & 0xFF  ) != 0;
-	metrics.is_current_throttled    = ((indep_throttle_status >> 16) & 0xFF  ) != 0;
-	metrics.is_temp_throttled       = ((indep_throttle_status >> 32) & 0xFFFF) != 0;
-	metrics.is_other_throttled      = ((indep_throttle_status >> 56) & 0xFF  ) != 0;
+    /* Throttling: See
+    https://elixir.bootlin.com/linux/latest/source/drivers/gpu/drm/amd/pm/swsmu/inc/amdgpu_smu.h
+    for the offsets */
+    metrics.is_power_throttled      = ((indep_throttle_status >> 0)  & 0xFF  ) != 0;
+    metrics.is_current_throttled    = ((indep_throttle_status >> 16) & 0xFF  ) != 0;
+    metrics.is_temp_throttled       = ((indep_throttle_status >> 32) & 0xFFFF) != 0;
+    metrics.is_other_throttled      = ((indep_throttle_status >> 56) & 0xFF  ) != 0;
 }
 
 bool AMDGPUMetricsBase::is_apu() const {
@@ -75,41 +75,43 @@ bool AMDGPUMetricsBase::is_apu() const {
 }
 
 bool AMDGPUMetricsBase::verify_metrics() {
-	metrics_table_header header = {};
+    metrics_table_header header = {};
 
     ifs_gpu_metrics.read(reinterpret_cast<char*>(&header), sizeof(header));
 
-	if (ifs_gpu_metrics.tellg() != sizeof(header)) {
-		SPDLOG_DEBUG("Failed to read the metrics header of node '{}'", drm_node);
-		return false;
-	}
+    if (ifs_gpu_metrics.tellg() != sizeof(header)) {
+        SPDLOG_DEBUG("Failed to read the metrics header of node '{}'", drm_node);
+        return false;
+    }
 
     SPDLOG_DEBUG("gpu_metrics version: {}.{}", header.format_revision, header.content_revision);
 
-	switch (header.format_revision) {
-		case 1: // v1_1, v1_2, v1_3
+    switch (header.format_revision) {
+        case 1: // v1_1, v1_2, v1_3
             // v1_0, not naturally aligned
-			if(header.content_revision == 0 || header.content_revision > 3)
-				break;
+            if(header.content_revision == 0 || header.content_revision > 3)
+                break;
 
-			return true;
-		case 2: // v2_1, v2_2, v2_3, v2_4
+            return true;
+
+        case 2: // v2_1, v2_2, v2_3, v2_4
             // v2_0, not naturally aligned
-			if(header.content_revision == 0 || header.content_revision > 4)
-				break;
+            if(header.content_revision == 0 || header.content_revision > 4)
+                break;
 
-			_is_apu = true;
+            _is_apu = true;
 
-			return true;
-		default:
-			break;
-	}
+            return true;
 
-	SPDLOG_WARN(
+        default:
+            break;
+    }
+
+    SPDLOG_WARN(
         "Unsupported gpu_metrics version: {}.{}", header.format_revision, header.content_revision
     );
 
-	return false;
+    return false;
 }
 
 void AMDGPUMetricsBase::parse_metrics_v1_3(const gpu_metrics_v1_3* in) {
@@ -163,8 +165,8 @@ void AMDGPUMetricsBase::parse_metrics_v2_3(const gpu_metrics_v2_3* in, uint8_t c
 
         metrics.apu_cpu_temp_c = cpu_temp / 100;
     }/* else if( cpuStats.ReadcpuTempFile(cpu_temp) ) {
-        // fallback 2: Try temp from file 'm_cpuTempFile' of 'cpu.cpp'
-        metrics.apu_cpu_temp_c = cpu_temp;
+    // fallback 2: Try temp from file 'm_cpuTempFile' of 'cpu.cpp'
+    metrics.apu_cpu_temp_c = cpu_temp;
     }*/
 
     if (IS_VALID_METRIC(in->current_gfxclk))
