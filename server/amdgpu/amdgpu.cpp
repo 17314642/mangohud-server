@@ -89,7 +89,7 @@ float AMDGPU::get_power_usage() {
     if (metrics_available)
         return gpu_metrics.metrics.average_gfx_power_w;
     else {
-        if (hwmon.exists("average_power"))
+        if (hwmon.is_open("average_power"))
             return hwmon.get_sensor_value("average_power");
         else
             return hwmon.get_sensor_value("current_power");

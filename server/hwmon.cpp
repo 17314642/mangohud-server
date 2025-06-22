@@ -22,15 +22,11 @@ void HwmonBase::find_sensors() {
             if (sensor->use_regex) {
                 std::regex rx(sensor->filename);
 
-                if (!std::regex_match(filename, matches, rx) || matches.size() != 2)
+                if (!std::regex_match(filename, matches, rx))
                     continue;
-    
-                auto cur_id = std::stoull(matches[1].str());
-    
-                if (sensor->path.empty() || cur_id < sensor->id) {
-                    sensor->path = entry.path().string();
-                    sensor->id = cur_id;
-                }
+
+                sensor->path = entry.path().string();
+                break;
             } else if (filename == sensor->filename) {
                 sensor->path = entry.path().string();
                 break;
@@ -146,7 +142,7 @@ void HwmonBase::poll_sensors()
     }
 }
 
-bool HwmonBase::exists(const std::string& generic_name) {
+bool HwmonBase::is_open(const std::string& generic_name) {
     if (sensors.find(generic_name) == sensors.end())
         return false;
 
