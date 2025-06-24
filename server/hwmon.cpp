@@ -146,7 +146,7 @@ bool HwmonBase::is_open(const std::string& generic_name) {
     if (sensors.find(generic_name) == sensors.end())
         return false;
 
-    return sensors[generic_name].filename.empty();
+    return !sensors[generic_name].filename.empty();
 }
 
 uint64_t HwmonBase::get_sensor_value(const std::string& generic_name)
