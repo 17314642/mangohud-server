@@ -4,7 +4,7 @@ pkgrel=1
 pkgdesc="MangoHud with server-client architecture. Server package."
 arch=('x86_64')
 url="https://github.com/17314642/mangohud-server"
-makedepends=('ninja' 'meson' 'python-mako' 'glslang' 'pkgconf' 'patch' 'gcc' 'libdrm' 'libcap')
+makedepends=('ninja' 'meson' 'pkgconf' 'gcc' 'libdrm' 'libcap')
 license=('MIT')
 source=(
     "mangohud-server"::"git+${url}"

@@ -1,20 +1,20 @@
 #### Building on Arch Linux
-1. Download PKGBUILD from `pkgbuild` directory
+1. Download PKGBUILD
 2. `makepkg -si`
 
 #### Dependencies
-1. C and C++ compiler
+1. C++ compiler
 2. Meson
 3. Ninja
-4. `apt install python3-mako glslang-tools libdrm-dev libcap-dev`
+4. For compiling: `apt install libdrm-dev libcap-dev`
+5. For running: `apt install libdrm libcap`
 
 #### Compilation
 
-`meson setup build && ninja -C build`
+`meson setup builddir && ninja -C builddir`
 
 #### Installation
-`sudo ninja -C build install`
+`sudo ninja -C builddir install`
 
 #### Running
-1. `mangohud_server`
-2. `MANGOHUD_2=1 any_vulkan_app`
+1. `mangohud-server`
