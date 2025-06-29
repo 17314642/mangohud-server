@@ -16,7 +16,7 @@
 #include "fdinfo.hpp"
 #include "../common/socket.hpp"
 #include "memory.hpp"
-#include "cpu.hpp"
+#include "cpu/cpu.hpp"
 
 spdlog::level::level_enum get_log_level() {
     const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
@@ -110,7 +110,7 @@ int main() {
     };
 
     GPUS gpus;
-    CPUWithRAPL cpu;
+    CPU cpu;
     std::map<std::string, float> ram_stats;
 
     std::chrono::time_point<std::chrono::steady_clock> last_stats_poll;

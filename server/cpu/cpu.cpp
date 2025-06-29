@@ -1,7 +1,11 @@
 #include <spdlog/spdlog.h>
 #include <numeric>
 #include <sstream>
+
 #include "cpu.hpp"
+#include "power/rapl.hpp"
+#include "power/zenpower.hpp"
+#include "power/zenergy.hpp"
 
 CPU::CPU() {
     ifs_stat.open("/proc/stat");
@@ -12,16 +16,40 @@ CPU::CPU() {
 
     if (!ifs_cpuinfo.is_open())
         SPDLOG_WARN("failed to open cpu info file. cpu frequency will not work.");
+
+    power_usage = init_power_usage();
+}
+
+std::unique_ptr<CPUPower> CPU::init_power_usage() {
+    std::unique_ptr<CPUPower> tmp_usage = std::make_unique<Zenpower>();
+
+    if (tmp_usage->is_initialized()) {
+        SPDLOG_INFO("Using zenpower for cpu power");
+        return tmp_usage;
+    }
+
+    tmp_usage = std::make_unique<Zenergy>();
+
+    if (tmp_usage->is_initialized()) {
+        SPDLOG_INFO("Using zenergy for cpu power");
+        return tmp_usage;
+    }
+
+    tmp_usage = std::make_unique<RAPL>();
+
+    if (tmp_usage->is_initialized()) {
+        SPDLOG_INFO("Using RAPL for cpu power");
+        return tmp_usage;
+    }
+
+    return nullptr;
 }
 
 void CPU::poll() {
-    auto current_time = std::chrono::steady_clock::now();
-    delta_time_ns = current_time - previous_time;
-    previous_time = current_time;
-
     pre_poll_overrides();
     poll_load();
     poll_frequency();
+    poll_power_usage();
 }
 
 cpu_info_t CPU::get_info() {
@@ -142,41 +170,20 @@ void CPU::poll_frequency() {
     info.frequency = max_frequency;
 }
 
-CPUWithRAPL::CPUWithRAPL() {
-    const std::string energy_file = "/sys/class/powercap/intel-rapl:0/energy_uj";
-    ifs_rapl.open(energy_file);
+void CPU::poll_power_usage() {
+    if (!power_usage)
+        return;
 
-    if (!ifs_rapl.is_open())
-        SPDLOG_WARN("Failed to open \"{}\". cpu power will not work.", energy_file);
+    power_usage->poll();
+    info.power = power_usage->get_power_usage();
 }
 
-float CPUWithRAPL::get_power_usage() {
-    if (!ifs_rapl.is_open())
-        return 0;
+void CPUPower::poll() {
+    std::chrono::time_point current_time = std::chrono::steady_clock::now();
 
-    ifs_rapl.seekg(0);
+    delta_time_ns = current_time - previous_time;
+    previous_time = current_time;
 
-    std::string val;
-    std::getline(ifs_rapl, val);
-
-    if (val.empty())
-        return 0;
-
-    uint64_t total_usage = std::stoull(val);
-
-    if (previous_usage == 0) {
-        previous_usage = total_usage;
-        return 0;
-    }
-    
-    float usage = total_usage - previous_usage;
-    usage /= std::chrono::duration_cast<std::chrono::seconds>(delta_time_ns).count();
-
-    previous_usage = total_usage;
-
-    return usage / 1'000'000;
+    pre_poll_overrides();
 }
 
-void CPUWithRAPL::pre_poll_overrides() {
-    info.power = get_power_usage();
-}
