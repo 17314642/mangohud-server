@@ -5,7 +5,7 @@ RAPL::RAPL() {
     hwmon.base_dir = rapl_path;
     hwmon.setup(sensors);
 
-    if (!hwmon.is_open("temperature")) {
+    if (!hwmon.is_open("energy")) {
         SPDLOG_WARN("Failed to open \"{}\".", rapl_path);
         return;
     }

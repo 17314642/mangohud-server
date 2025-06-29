@@ -180,7 +180,7 @@ int main() {
 
                     mangohud_message msg = {};
 
-                    // ====START CPU INFO===========================================================
+                    // ====START GPU INFO===========================================================
                     for (std::shared_ptr<GPU>& gpu : gpus.available_gpus) {
                         msg.gpus[msg.num_of_gpus].process_metrics = gpu->get_process_metrics(pid);
                         msg.gpus[msg.num_of_gpus].system_metrics = gpu->get_system_metrics();

@@ -144,7 +144,7 @@ void HwmonBase::poll_sensors()
 }
 
 bool HwmonBase::is_exists(const std::string& generic_name) {
-    return sensors.find(generic_name) == sensors.end();
+    return sensors.find(generic_name) != sensors.end();
 }
 
 bool HwmonBase::is_open(const std::string& generic_name) {
