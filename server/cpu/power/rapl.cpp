@@ -1,3 +1,4 @@
+#include <limits>
 #include <spdlog/spdlog.h>
 #include "rapl.hpp"
 
@@ -20,15 +21,19 @@ void RAPL::pre_poll_overrides() {
 float RAPL::get_power_usage() {
     uint64_t total_usage = hwmon.get_sensor_value("energy");
 
-    if (previous_usage == 0) {
+    if (previous_usage == 0 || total_usage == previous_usage) {
         previous_usage = total_usage;
         return 0.f;
     }
     
     float usage = total_usage - previous_usage;
     usage /= std::chrono::duration_cast<std::chrono::seconds>(delta_time_ns).count();
+    usage /= 1'000'000;
 
     previous_usage = total_usage;
 
-    return usage / 1'000'000;
+    if (usage == std::numeric_limits<float>::infinity())
+        return 0.f;
+
+    return usage;
 }
