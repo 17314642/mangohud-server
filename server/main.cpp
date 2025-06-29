@@ -224,6 +224,7 @@ int main() {
 
                     msg.num_of_cores = num_of_cores;
 
+                    // maybe make it configurable
                     if (apu_power > msg.cpu.power)
                         msg.cpu.power = apu_power;
 
