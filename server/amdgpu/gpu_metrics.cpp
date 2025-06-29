@@ -1,6 +1,5 @@
 #include <spdlog/spdlog.h>
 #include "gpu_metrics.hpp"
-#include "../../client/include/mesa/util/macros.h"
 
 AMDGPUMetricsBase::AMDGPUMetricsBase(const std::string& drm_node) : drm_node(drm_node) {
 
@@ -126,6 +125,8 @@ void AMDGPUMetricsBase::parse_metrics_v1_3(const gpu_metrics_v1_3* in) {
     metrics.fan_speed           = in->current_fan_speed;
 }
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
 void AMDGPUMetricsBase::parse_metrics_v2_3(const gpu_metrics_v2_3* in, uint8_t content_revision) {
     metrics.gpu_load_percent = in->average_gfx_activity;
     metrics.average_gfx_power_w = in->average_gfx_power / 1000.f;
@@ -179,6 +180,8 @@ void AMDGPUMetricsBase::parse_metrics_v2_3(const gpu_metrics_v2_3* in, uint8_t c
     else if (IS_VALID_METRIC(in->average_uclk_frequency))
         metrics.current_uclk_mhz = in->average_uclk_frequency;
 }
+
+#undef ARRAY_SIZE
 
 AMDGPUMetrics::AMDGPUMetrics(const std::string& drm_node)
     : gpu_metrics(AMDGPUMetricsBase(drm_node)) {}
