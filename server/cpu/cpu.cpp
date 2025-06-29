@@ -18,6 +18,7 @@ CPU::CPU() {
         SPDLOG_WARN("failed to open cpu info file. cpu frequency will not work.");
 
     power_usage = init_power_usage();
+    temperature.find_temperature_sensor();
 }
 
 std::unique_ptr<CPUPower> CPU::init_power_usage() {
@@ -50,6 +51,7 @@ void CPU::poll() {
     poll_load();
     poll_frequency();
     poll_power_usage();
+    poll_temperature();
 }
 
 cpu_info_t CPU::get_info() {
@@ -178,6 +180,10 @@ void CPU::poll_power_usage() {
     info.power = power_usage->get_power_usage();
 }
 
+void CPU::poll_temperature() {
+    info.temp = temperature.get_temperature();
+}
+
 void CPUPower::poll() {
     std::chrono::time_point current_time = std::chrono::steady_clock::now();
 
@@ -187,3 +193,41 @@ void CPUPower::poll() {
     pre_poll_overrides();
 }
 
+void CPUTemp::find_temperature_sensor() {
+    for (const cpu_temp_sensor& p : sensors) {
+        const std::string& name = p.name;
+        const hwmon_sensor& s = p.sensor;
+
+        std::string hwmon_dir = hwmon.find_hwmon_dir_by_name(name);
+
+        if (hwmon_dir.empty())
+            continue;
+
+        std::vector<hwmon_sensor> try_sensors = { {
+            .generic_name = "temperature",
+            .filename     = s.filename,
+            .label        = s.label
+        } };
+
+        hwmon.base_dir = hwmon_dir;
+        hwmon.setup(try_sensors);
+
+        if (hwmon.is_open("temperature")) {
+            SPDLOG_INFO(
+                "Using {} ({}) for cpu temperature", name, hwmon.get_sensor_path("temperature")
+            );
+
+            found_sensor = true;
+            return;
+        }
+    }
+}
+
+int CPUTemp::get_temperature() {
+    if (!found_sensor)
+        return 0;
+
+    hwmon.poll_sensors();
+    float temp = hwmon.get_sensor_value("temperature") / 1'000.f;
+    return std::round(temp);
+}

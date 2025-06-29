@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include "../common/gpu_metrics.hpp"
+#include "../hwmon.hpp"
 
 class CPUPower {
 protected:
@@ -20,6 +21,32 @@ public:
     virtual float get_power_usage() = 0;
 };
 
+class CPUTemp : private Hwmon {
+private:
+    struct cpu_temp_sensor {
+        std::string name;
+        hwmon_sensor sensor;
+    };
+
+    const std::vector<cpu_temp_sensor> sensors = {
+        { "coretemp"       , { .filename = "temp\\d*_input", .label = "Package id 0"    } },
+        { "zenpower"       , { .filename = "temp\\d*_input", .label = "T(die|ctl)"      } },
+        { "k10temp"        , { .filename = "temp\\d*_input", .label = "T(die|ctl)"      } },
+        { "atk0110"        , { .filename = "temp\\d*_input", .label = "CPU Temperature" } },
+        { "it8603"         , { .filename = "temp\\d*_input", .label = "temp1"           } },
+        { "cpuss0_.*"      , { .filename = "temp1_input"                                } },
+        { "nct.*"          , { .filename = "temp\\d*_input", .label = "TSI0_TEMP"       } },
+        { "asusec"         , { .filename = "temp\\d*_input", .label = "CPU"             } },
+        { "l_pcs"          , { .filename = "temp\\d*_input", .label = "Node 0 Max"      } },
+        { "cpu\\d*_thermal", { .filename = "temp1_input"                                } }
+    };
+
+    bool found_sensor = false;
+public:
+    void find_temperature_sensor();
+    int get_temperature();
+};
+
 class CPU {
 private:
     std::ifstream ifs_stat;
@@ -31,6 +58,8 @@ private:
     void poll_load();
     void poll_frequency();
     void poll_power_usage();
+    void poll_temperature();
+
     std::unique_ptr<CPUPower> init_power_usage();
 
     std::vector<std::vector<uint64_t>> get_cpu_times();
@@ -39,6 +68,7 @@ private:
     );
 
     std::unique_ptr<CPUPower> power_usage;
+    CPUTemp temperature;
 
     cpu_info_t info;
     std::vector<core_info_t> cores;
