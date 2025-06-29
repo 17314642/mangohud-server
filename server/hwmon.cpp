@@ -105,6 +105,7 @@ std::string HwmonBase::find_hwmon_dir_by_name(const std::string& name) {
         return hwmon_dir;
     }
 
+    SPDLOG_DEBUG("failed to find hwmon dir \"{}\"", name);
     return "";
 }
 
@@ -142,16 +143,20 @@ void HwmonBase::poll_sensors()
     }
 }
 
+bool HwmonBase::is_exists(const std::string& generic_name) {
+    return sensors.find(generic_name) == sensors.end();
+}
+
 bool HwmonBase::is_open(const std::string& generic_name) {
     if (sensors.find(generic_name) == sensors.end())
         return false;
 
-    return !sensors[generic_name].filename.empty();
+    return sensors[generic_name].stream.is_open();
 }
 
 uint64_t HwmonBase::get_sensor_value(const std::string& generic_name)
 {
-    if (sensors.find(generic_name) == sensors.end()) {
+    if (!is_exists(generic_name)) {
         SPDLOG_DEBUG("sensor \"{}\" doesn't exist", generic_name);
         return 0;
     }
