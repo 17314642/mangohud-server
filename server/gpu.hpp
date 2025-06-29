@@ -78,8 +78,9 @@ protected:
     virtual float   get_power_usage()           { return 0.f; }
     virtual float   get_power_limit()           { return 0.f; }
 
-    virtual float   get_apu_cpu_power()         { return 0.f; }
-    virtual int     get_apu_cpu_temp()          { return 0; }
+    virtual bool    get_is_apu()                { return false; }
+    virtual float   get_apu_cpu_power()         { return 0.f;   }
+    virtual int     get_apu_cpu_temp()          { return 0;     }
 
     virtual bool    get_is_power_throttled()    { return false; }
     virtual bool    get_is_current_throttled()  { return false; }

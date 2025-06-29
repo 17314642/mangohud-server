@@ -24,6 +24,7 @@ struct gpu_metrics_system_t {
     float   power_usage;
     float   power_limit;
 
+    bool    is_apu;
     float   apu_cpu_power;
     int     apu_cpu_temp;
 

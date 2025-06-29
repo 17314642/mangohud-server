@@ -60,6 +60,7 @@ public:
     float   get_power_usage()                   override;
     float   get_power_limit()                   override;
 
+    bool    get_is_apu()                        override;
     float   get_apu_cpu_power()                 override;
     int     get_apu_cpu_temp()                  override;
 

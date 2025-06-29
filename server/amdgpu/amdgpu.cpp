@@ -100,6 +100,13 @@ float AMDGPU::get_power_limit() {
     return hwmon.get_sensor_value("power_limit");
 }
 
+bool AMDGPU::get_is_apu() {
+    if (metrics_available)
+        return gpu_metrics.is_apu();
+
+    return false;
+}
+
 float AMDGPU::get_apu_cpu_power() {
     if (metrics_available)
         return gpu_metrics.metrics.average_cpu_power_w;

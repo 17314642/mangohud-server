@@ -217,6 +217,7 @@ void GPU::poll() {
             .power_usage            = get_power_usage(),
             .power_limit            = get_power_limit(),
 
+            .is_apu                 = get_is_apu(),
             .apu_cpu_power          = get_apu_cpu_power(),
             .apu_cpu_temp           = get_apu_cpu_temp(),
 

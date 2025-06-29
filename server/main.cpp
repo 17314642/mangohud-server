@@ -179,12 +179,18 @@ int main() {
                     }
 
                     mangohud_message msg = {};
+                    int apu_power = 0, apu_temp = 0;
 
                     // ====START GPU INFO===========================================================
                     for (std::shared_ptr<GPU>& gpu : gpus.available_gpus) {
                         msg.gpus[msg.num_of_gpus].process_metrics = gpu->get_process_metrics(pid);
                         msg.gpus[msg.num_of_gpus].system_metrics = gpu->get_system_metrics();
                         msg.num_of_gpus++;
+
+                        if (msg.gpus[msg.num_of_gpus].system_metrics.is_apu) {
+                            apu_power = msg.gpus[msg.num_of_gpus].system_metrics.apu_cpu_power;
+                            apu_temp  = msg.gpus[msg.num_of_gpus].system_metrics.apu_cpu_temp;
+                        }
                     }
                     // ====END GPU INFO=============================================================
 
@@ -217,6 +223,12 @@ int main() {
                     }
 
                     msg.num_of_cores = num_of_cores;
+
+                    if (apu_power > msg.cpu.power)
+                        msg.cpu.power = apu_power;
+
+                    if (apu_temp > msg.cpu.temp)
+                        msg.cpu.temp = apu_temp;
                     // ====END CPU INFO=============================================================
 
                     send_message(fd->fd, msg);
