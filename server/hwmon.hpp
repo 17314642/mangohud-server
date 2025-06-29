@@ -16,14 +16,14 @@ namespace fs = std::filesystem;
 struct hwmon_sensor {
     std::string generic_name;
     std::string filename;
-    bool use_regex = false;
+    std::string label;
 };
 
 class HwmonBase {
 private:
     struct sensor {
         std::string filename;
-        bool use_regex = false;
+        std::string label;
 
         std::ifstream stream;
         std::string path;
@@ -48,6 +48,7 @@ public:
     bool is_exists(const std::string& generic_name);
     bool is_open(const std::string& generic_name);
     uint64_t get_sensor_value(const std::string& generic_name);
+    std::string get_sensor_path(const std::string generic_name);
 };
 
 struct Hwmon {

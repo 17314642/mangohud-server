@@ -1,10 +1,11 @@
 #include "hwmon.hpp"
+#include "../common/helpers.hpp"
 
 void HwmonBase::add_sensors(const std::vector<hwmon_sensor>& input_sensors)
 {
     for (const auto& s : input_sensors) {
-        sensors[s.generic_name].use_regex = s.use_regex;
         sensors[s.generic_name].filename = s.filename;
+        sensors[s.generic_name].label = s.label;
     }
 }
 
@@ -12,25 +13,40 @@ void HwmonBase::find_sensors() {
     SPDLOG_DEBUG("hwmon: checking \"{}\" directory", base_dir);
 
     for (const auto &entry : fs::directory_iterator(base_dir)) {
-        auto filename = entry.path().filename().string();
+        if (!entry.is_regular_file())
+            continue;
+
+        std::string filename = entry.path().filename().string();
+        size_t underscore_pos = filename.rfind('_');
+
+        // all hwmon sensors have underscore in their name
+        // possibly needed later when checking sensor label
+        if (underscore_pos == std::string::npos)
+            continue;
 
         for (auto& s : sensors) {
             auto key = s.first;
             auto sensor = &s.second;
-            std::smatch matches;
 
-            if (sensor->use_regex) {
-                std::regex rx(sensor->filename);
+            if (!sensor->label.empty()) {
+                std::smatch matches;
+                std::regex rx(sensor->label);
 
-                if (!std::regex_match(filename, matches, rx))
+                std::string label_file = filename.substr(0, underscore_pos) + "_label";
+                std::string label = read_line(base_dir + "/" + label_file);
+
+                if (!std::regex_match(label, matches, rx))
                     continue;
-
-                sensor->path = entry.path().string();
-                break;
-            } else if (filename == sensor->filename) {
-                sensor->path = entry.path().string();
-                break;
             }
+
+            std::smatch matches;
+            std::regex rx(sensor->filename);
+
+            if (!std::regex_match(filename, matches, rx))
+                continue;
+
+            sensor->path = entry.path().string();
+            break;
         }
     }
 }
@@ -98,7 +114,10 @@ std::string HwmonBase::find_hwmon_dir_by_name(const std::string& name) {
 
         std::getline(name_stream, name_content);
 
-        if (name_content.find(name) == std::string::npos)
+        std::smatch matches;
+        std::regex rx(name);
+
+        if (!std::regex_match(name_content, matches, rx))
             continue;
 
         // return the first sensor with specified name
@@ -110,13 +129,16 @@ std::string HwmonBase::find_hwmon_dir_by_name(const std::string& name) {
 }
 
 void HwmonBase::setup(const std::vector<hwmon_sensor>& input_sensors, const std::string& drm_node) {
+    sensors.clear();
+
     add_sensors(input_sensors);
 
-    if (base_dir.empty())
+    if (base_dir.empty()) {
         base_dir = find_hwmon_dir(drm_node);
 
-    if (base_dir.empty())
-        return;
+        if (base_dir.empty())
+            return;
+    }
 
     find_sensors();
     open_sensors();
@@ -154,12 +176,20 @@ bool HwmonBase::is_open(const std::string& generic_name) {
     return sensors[generic_name].stream.is_open();
 }
 
-uint64_t HwmonBase::get_sensor_value(const std::string& generic_name)
-{
+uint64_t HwmonBase::get_sensor_value(const std::string& generic_name) {
     if (!is_exists(generic_name)) {
         SPDLOG_DEBUG("sensor \"{}\" doesn't exist", generic_name);
         return 0;
     }
     
     return sensors[generic_name].val;
+}
+
+std::string HwmonBase::get_sensor_path(const std::string generic_name) {
+    if (!is_exists(generic_name)) {
+        SPDLOG_DEBUG("sensor \"{}\" doesn't exist", generic_name);
+        return "";
+    }
+
+    return sensors[generic_name].path; 
 }
