@@ -61,7 +61,7 @@ void IOStats::poll_pid(pid_t pid) {
     read_mb_per_sec /= duration_cast<seconds>(delta).count();
     write_mb_per_sec /= duration_cast<seconds>(delta).count();
 
-    SPDLOG_DEBUG("[{}]: read = {}; write = {}", pid, read_mb_per_sec, write_mb_per_sec);
+    // SPDLOG_DEBUG("[{}]: read = {}; write = {}", pid, read_mb_per_sec, write_mb_per_sec);
 
     stats.read_mb_per_sec = read_mb_per_sec;
     stats.write_mb_per_sec = write_mb_per_sec;
