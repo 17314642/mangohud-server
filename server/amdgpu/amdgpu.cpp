@@ -49,7 +49,7 @@ int AMDGPU::get_memory_clock() {
     if (metrics_available)
         return gpu_metrics.metrics.current_uclk_mhz;
     else
-        return hwmon.get_sensor_value("memory_clock") / 1'000'000;
+        return hwmon.get_sensor_value("memory_clock") / 1'000'000.f;
 }
 
 int AMDGPU::get_memory_temp() {
