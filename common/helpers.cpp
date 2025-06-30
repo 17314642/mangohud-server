@@ -1,9 +1,9 @@
 #include <fstream>
 #include <algorithm>
+#include <spdlog/spdlog.h>
 #include "helpers.hpp"
 
-std::string read_line(const std::string& filename)
-{
+std::string read_line(const std::string& filename) {
     std::string line;
     std::ifstream file(filename);
 
@@ -25,4 +25,15 @@ bool ends_with(std::string s1, std::string s2, bool ignore_case) {
 
     size_t pos = s1.size() - s2.size();
     return (s1.rfind(s2, pos) == pos);
+}
+
+uint64_t try_stoull(const std::string& str) {
+    try {
+        uint64_t val = std::stoull(str);
+        return val;
+    } catch(...) {
+        SPDLOG_DEBUG("failed to convert \"{}\" to uint64_t", str);
+    }
+
+    return 0;
 }

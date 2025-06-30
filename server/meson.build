@@ -13,6 +13,7 @@ src = [
     'fdinfo.cpp',
     'gpu.cpp',
     'hwmon.cpp',
+    'iostats.cpp',
 
     'intel/i915/i915.cpp',
     'intel/i915/i915_drm.cpp',

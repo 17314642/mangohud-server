@@ -54,6 +54,11 @@ struct memory_t {
     float process_virtual   = 0;
 };
 
+struct io_stats_t {
+    float read_mb_per_sec = 0.f;
+    float write_mb_per_sec = 0.f;
+};
+
 typedef struct core_info_t {
    int load       = 0;
    int frequency  = 0;
@@ -66,6 +71,7 @@ struct mangohud_message {
     gpu_t gpus[8];
 
     memory_t memory;
+    io_stats_t io_stats;
 
     cpu_info_t cpu;
     uint16_t num_of_cores;

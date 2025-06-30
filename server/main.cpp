@@ -17,6 +17,7 @@
 #include "../common/socket.hpp"
 #include "memory.hpp"
 #include "cpu/cpu.hpp"
+#include "iostats.hpp"
 
 spdlog::level::level_enum get_log_level() {
     const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
@@ -111,6 +112,7 @@ int main() {
 
     GPUS gpus;
     CPU cpu;
+    IOStats iostats;
     std::map<std::string, float> ram_stats;
 
     std::chrono::time_point<std::chrono::steady_clock> last_stats_poll;
@@ -124,6 +126,7 @@ int main() {
 
         if (cur_time - last_stats_poll > 1s) {
             cpu.poll();
+            iostats.poll();
             ram_stats = get_ram_info();
             last_stats_poll = cur_time;
         }
@@ -171,6 +174,9 @@ int main() {
                     // TODO: add timeout after which pid should be deleted from GPU
                     // TODO: move code inside this clause somewhere else, so that it's called only
                     //       once per interval and not everytime we receive a socket message
+
+                    iostats.add_pid(pid);
+
                     for (auto& gpu : gpus.available_gpus) {
                         gpu->add_pid(pid);
 
@@ -231,6 +237,10 @@ int main() {
                     if (apu_temp > msg.cpu.temp)
                         msg.cpu.temp = apu_temp;
                     // ====END CPU INFO=============================================================
+
+                    // ====START IO INFO============================================================
+                    msg.io_stats = iostats.get_stats(pid);
+                    // ====END IO INFO==============================================================
 
                     send_message(fd->fd, msg);
                 }
