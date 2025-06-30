@@ -49,7 +49,7 @@ int AMDGPU::get_memory_clock() {
     if (metrics_available)
         return gpu_metrics.metrics.current_uclk_mhz;
     else
-        return hwmon.get_sensor_value("memory_clock");
+        return hwmon.get_sensor_value("memory_clock") / 1'000'000;
 }
 
 int AMDGPU::get_memory_temp() {
@@ -90,9 +90,9 @@ float AMDGPU::get_power_usage() {
         return gpu_metrics.metrics.average_gfx_power_w;
     else {
         if (hwmon.is_open("average_power"))
-            return hwmon.get_sensor_value("average_power");
+            return hwmon.get_sensor_value("average_power") / 1'000'000.f;
         else
-            return hwmon.get_sensor_value("current_power");
+            return hwmon.get_sensor_value("current_power") / 1'000'000.f;
     }
 }
 
