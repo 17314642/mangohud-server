@@ -77,3 +77,30 @@ struct mangohud_message {
     uint16_t num_of_cores;
     core_info_t cores[1024];
 };
+
+struct process_metrics {
+    gpu_metrics_process_t gpus[8];
+    struct {
+        float resident = 0;
+        float shared = 0;
+        float virt = 0;
+    } memory;
+    io_stats_t io_stats;
+};
+
+struct metrics {
+    cpu_info_t cpu;
+    uint16_t num_of_cores;
+    core_info_t cores[1024];
+
+    uint8_t num_of_gpus;
+    gpu_metrics_system_t gpus[8];
+
+    struct {
+        float used = 0;
+        float total = 0;
+        float swap_used = 0;
+    } memory;
+
+    std::unordered_map<pid_t, process_metrics> pids;
+};

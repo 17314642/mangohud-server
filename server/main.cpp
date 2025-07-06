@@ -19,6 +19,9 @@
 #include "cpu/cpu.hpp"
 #include "iostats.hpp"
 
+std::mutex current_metrics_lock;
+metrics current_metrics;
+
 spdlog::level::level_enum get_log_level() {
     const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
 
@@ -43,28 +46,168 @@ spdlog::level::level_enum get_log_level() {
         return spdlog::level::debug;
 }
 
-int main() {
-    spdlog::set_level(get_log_level());
+void poll_metrics(CPU& cpu, GPUS& gpus, IOStats& iostats) {
+    metrics m = {};
 
+    {
+        std::unique_lock lock(current_metrics_lock);
+        m = current_metrics;
+    }
+
+    {
+        std::set<pid_t> pids_to_delete;
+
+        for (std::pair<const pid_t, process_metrics>& proc : m.pids) {
+            pid_t pid = proc.first;
+
+            if (!std::filesystem::exists("/proc/" + std::to_string(pid)))
+                pids_to_delete.insert(pid);
+        }
+
+        for (const auto& p : pids_to_delete) {
+            SPDLOG_TRACE("deleting pid {}", p);
+            m.pids.erase(p);
+        }
+    }
+
+    // ====START CPU INFO===========================================================
+    cpu.poll();
+
+    m.cpu = cpu.get_info();
+
+    uint16_t num_of_cores = 0;
+    for (core_info_t core : cpu.get_core_info()) {
+        m.cores[num_of_cores] = core;
+        num_of_cores++;
+    }
+
+    m.num_of_cores = num_of_cores;
+    // ====END CPU INFO=============================================================
+
+    // ====START GPU INFO===========================================================
+    uint8_t num_of_gpus = 0;
+
+    for (std::shared_ptr<GPU>& gpu : gpus.available_gpus) {
+        m.gpus[num_of_gpus] = gpu->get_system_metrics();
+        num_of_gpus++;
+
+        if (m.gpus[num_of_gpus].is_apu) {
+            float apu_power = m.gpus[num_of_gpus].apu_cpu_power;
+            int apu_temp  = m.gpus[num_of_gpus].apu_cpu_temp;
+
+            // maybe make it configurable
+            if (apu_power > m.cpu.power)
+                m.cpu.power = apu_power;
+
+            if (apu_temp > m.cpu.temp)
+                m.cpu.temp = apu_temp;
+        }
+    }
+
+    m.num_of_gpus = num_of_gpus;
+
+    for (std::pair<const pid_t, process_metrics>& proc : m.pids) {
+        const pid_t pid = proc.first;
+        num_of_gpus = 0;
+
+        for (std::shared_ptr<GPU>& gpu : gpus.available_gpus)
+            m.pids[pid].gpus[num_of_gpus++] = gpu->get_process_metrics(pid);
+    }
+    // ====END GPU INFO=============================================================
+
+    // ====START MEMORY INFO========================================================
+    for (std::pair<const pid_t, process_metrics>& proc : m.pids) {
+        pid_t pid = proc.first;
+
+        std::map<std::string, float> mem_stats = get_process_memory(pid);
+        m.pids[pid].memory = {
+            .resident = mem_stats["resident"],
+            .shared = mem_stats["shared"],
+            .virt = mem_stats["virtual"]
+        };
+    }
+
+    std::map<std::string, float> ram_stats = get_ram_info();
+
+    m.memory = {
+        .used = ram_stats["used"],
+        .total = ram_stats["total"],
+        .swap_used = ram_stats["swap_used"],
+    };
+    // ====END MEMORY INFO==========================================================
+
+    // ====START IO INFO============================================================
+    iostats.poll();
+
+    for (std::pair<const pid_t, process_metrics>& proc : m.pids) {
+        pid_t pid = proc.first;
+        m.pids[pid].io_stats = iostats.get_stats(pid);
+    }
+    // ====END IO INFO==============================================================
+
+    {
+        std::unique_lock lock(current_metrics_lock);
+        current_metrics = m;
+    }
+}
+
+mangohud_message form_mangohud_message(pid_t pid) {
+    metrics m = {};
+    mangohud_message msg = {};
+
+    {
+        std::unique_lock lock(current_metrics_lock);
+        m = current_metrics;
+    }
+
+    process_metrics proc_metrics = m.pids[pid];
+
+    msg.num_of_gpus = m.num_of_gpus;
+
+    for (size_t i = 0; i < sizeof(m.gpus) / sizeof(m.gpus[0]); i++)
+        msg.gpus[i] = {
+            .process_metrics = proc_metrics.gpus[i],
+            .system_metrics = m.gpus[i]
+        };
+
+    msg.memory = {
+        .used = m.memory.used,
+        .total = m.memory.total,
+        .swap_used = m.memory.swap_used,
+
+        .process_resident = proc_metrics.memory.resident,
+        .process_shared = proc_metrics.memory.shared,
+        .process_virtual = proc_metrics.memory.virt
+    };
+
+    msg.io_stats = proc_metrics.io_stats;
+    msg.cpu = m.cpu;
+    msg.num_of_cores = m.num_of_cores;
+    std::memcpy(&msg.cores, &m.cores, sizeof(m.cores));
+
+    return msg;
+}
+
+bool setup_socket(int& sock) {
     std::string socket_path = get_socket_path();
 
     if (socket_path.empty())
-        return -1;
+        return false;
 
     SPDLOG_INFO("Socket path: {}", socket_path);
 
-    int sock = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
+    sock = socket(AF_UNIX, SOCK_SEQPACKET | SOCK_NONBLOCK, 0);
 
     if (sock < 0) {
         LOG_UNIX_ERRNO_ERROR("Couldn't create socket.");
-        return -1;
+        return false;
     }
 
     SPDLOG_INFO("Socket created.");
 
     if (std::filesystem::exists(socket_path) && !std::filesystem::remove(socket_path)) {
         SPDLOG_ERROR("Failed to delete existing socket file");
-        return -1;
+        return false;
     }
 
     const sockaddr_un addr = {
@@ -77,7 +220,7 @@ int main() {
 
     if (ret < 0) {
         LOG_UNIX_ERRNO_ERROR("Failed to assign name to socket.");
-        return -1;
+        return false;
     }
 
     // https://linux.die.net/man/2/setsockopt
@@ -88,22 +231,35 @@ int main() {
 
     if (setsockopt(sock, SOL_SOCKET, SO_PASSCRED, &optval, sizeof(optval)) == -1) {
         LOG_UNIX_ERRNO_ERROR("Failed to enable credentials support for socket.");
-        return -1;
+        return false;
     }
 
     ret = listen(sock, 0);
 
     if (ret < 0) {
         LOG_UNIX_ERRNO_ERROR("Failed to listen to socket.");
-        return -1;
+        return false;
     }
 
     if (getuid() == 0) {
         ret = chmod(socket_path.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
         if (ret < 0) {
             LOG_UNIX_ERRNO_ERROR("Failed to make socket available to everyone.");
-            return -1;
+            return false;
         }
+    }
+
+    return true;
+}
+
+int main() {
+    spdlog::set_level(get_log_level());
+
+    int sock = 0;
+
+    if (!setup_socket(sock)) {
+        SPDLOG_ERROR("Socket setup failed.");
+        return -1;
     }
 
     std::vector<pollfd> poll_fds = {
@@ -113,25 +269,21 @@ int main() {
     GPUS gpus;
     CPU cpu;
     IOStats iostats;
-    std::map<std::string, float> ram_stats;
 
     std::chrono::time_point<std::chrono::steady_clock> last_stats_poll;
 
-    std::map<pid_t, std::chrono::time_point<std::chrono::steady_clock>> proc_mem_last_update_time;
-    std::map<pid_t, std::map<std::string, float>> proc_mem_stats;
+    // start_api_server();
 
     while (true) {
         std::chrono::time_point<std::chrono::steady_clock> cur_time =
             std::chrono::steady_clock().now();
 
         if (cur_time - last_stats_poll > 1s) {
-            cpu.poll();
-            iostats.poll();
-            ram_stats = get_ram_info();
+            poll_metrics(cpu, gpus, iostats);
             last_stats_poll = cur_time;
         }
 
-        ret = poll(poll_fds.data(), poll_fds.size(), 1000);
+        int ret = poll(poll_fds.data(), poll_fds.size(), 1000);
 
         if (ret < 0) {
             LOG_UNIX_ERRNO_ERROR("poll() failed.");
@@ -170,78 +322,27 @@ int main() {
 
                 size_t pid = 0;
                 if (receive_message_with_creds(fd->fd, pid)) {
-                    // TODO: only add_pid if doesn't exist already
-                    // TODO: add timeout after which pid should be deleted from GPU
-                    // TODO: move code inside this clause somewhere else, so that it's called only
-                    //       once per interval and not everytime we receive a socket message
+                    bool pid_exists = false;
 
-                    iostats.add_pid(pid);
-
-                    for (auto& gpu : gpus.available_gpus) {
-                        gpu->add_pid(pid);
-
-                        if (FDInfo* ptr = dynamic_cast<FDInfo*>(gpu.get()))
-                            ptr->fdinfo.add_pid(pid);
+                    {
+                        std::unique_lock lock(current_metrics_lock);
+                        pid_exists = current_metrics.pids.find(pid) != current_metrics.pids.end();
                     }
 
-                    mangohud_message msg = {};
-                    int apu_power = 0, apu_temp = 0;
+                    if (!pid_exists) {
+                        iostats.add_pid(pid);
 
-                    // ====START GPU INFO===========================================================
-                    for (std::shared_ptr<GPU>& gpu : gpus.available_gpus) {
-                        msg.gpus[msg.num_of_gpus].process_metrics = gpu->get_process_metrics(pid);
-                        msg.gpus[msg.num_of_gpus].system_metrics = gpu->get_system_metrics();
-                        msg.num_of_gpus++;
+                        for (auto& gpu : gpus.available_gpus) {
+                            gpu->add_pid(pid);
 
-                        if (msg.gpus[msg.num_of_gpus].system_metrics.is_apu) {
-                            apu_power = msg.gpus[msg.num_of_gpus].system_metrics.apu_cpu_power;
-                            apu_temp  = msg.gpus[msg.num_of_gpus].system_metrics.apu_cpu_temp;
+                            if (FDInfo* ptr = dynamic_cast<FDInfo*>(gpu.get()))
+                                ptr->fdinfo.add_pid(pid);
                         }
-                    }
-                    // ====END GPU INFO=============================================================
 
-                    // ====START MEMORY INFO========================================================
-                    if (cur_time - proc_mem_last_update_time[pid] > 1s) {
-                        proc_mem_stats[pid] = get_process_memory(pid);
-                        proc_mem_last_update_time[pid] = cur_time;
+                        current_metrics.pids.try_emplace(pid, process_metrics());
                     }
 
-                    memory_t cur_mem_stats = {
-                        .used      = ram_stats["used"],
-                        .total     = ram_stats["total"],
-                        .swap_used = ram_stats["swap_used"],
-
-                        .process_resident = proc_mem_stats[pid]["resident"],
-                        .process_shared   = proc_mem_stats[pid]["shared"],
-                        .process_virtual  = proc_mem_stats[pid]["virtual"]
-                    };
-
-                    msg.memory = cur_mem_stats;
-                    // ====END MEMORY INFO==========================================================
-
-                    // ====START CPU INFO===========================================================
-                    msg.cpu = cpu.get_info();
-
-                    uint16_t num_of_cores = 0;
-                    for (core_info_t core : cpu.get_core_info()) {
-                        msg.cores[num_of_cores] = core;
-                        num_of_cores++;
-                    }
-
-                    msg.num_of_cores = num_of_cores;
-
-                    // maybe make it configurable
-                    if (apu_power > msg.cpu.power)
-                        msg.cpu.power = apu_power;
-
-                    if (apu_temp > msg.cpu.temp)
-                        msg.cpu.temp = apu_temp;
-                    // ====END CPU INFO=============================================================
-
-                    // ====START IO INFO============================================================
-                    msg.io_stats = iostats.get_stats(pid);
-                    // ====END IO INFO==============================================================
-
+                    mangohud_message msg = form_mangohud_message(pid);
                     send_message(fd->fd, msg);
                 }
             }
