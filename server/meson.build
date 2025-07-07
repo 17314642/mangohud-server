@@ -37,5 +37,5 @@ libcap_dep = dependency('libcap')
 
 executable(
     'mangohud-server', src,
-    dependencies: [spdlog_dep, libdrm_dep, libcap_dep], install: true
+    dependencies: [spdlog_dep, libdrm_dep, libcap_dep, json_dep], install: true
 )
