@@ -104,3 +104,7 @@ struct metrics {
 
     std::unordered_map<pid_t, process_metrics> pids;
 };
+
+extern std::mutex current_metrics_lock;
+extern metrics current_metrics;
+extern std::atomic<bool> should_exit;

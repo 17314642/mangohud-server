@@ -1,5 +1,6 @@
 src = [
     'main.cpp',
+    'api.cpp',
 
     '../common/helpers.cpp',
     '../common/socket.cpp',

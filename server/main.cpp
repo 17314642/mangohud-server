@@ -11,6 +11,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include "gpu.hpp"
 #include "fdinfo.hpp"
@@ -18,9 +19,12 @@
 #include "memory.hpp"
 #include "cpu/cpu.hpp"
 #include "iostats.hpp"
+#include "api.hpp"
 
 std::mutex current_metrics_lock;
 metrics current_metrics;
+
+std::atomic<bool> should_exit = false;
 
 spdlog::level::level_enum get_log_level() {
     const char* ch_log_level = getenv("MANGOHUD_LOG_LEVEL");
@@ -252,8 +256,13 @@ bool setup_socket(int& sock) {
     return true;
 }
 
+void sigint_handler(int signum) {
+    should_exit = true;
+}
+
 int main() {
     spdlog::set_level(get_log_level());
+    signal(SIGINT, sigint_handler);
 
     int sock = 0;
 
@@ -272,9 +281,10 @@ int main() {
 
     std::chrono::time_point<std::chrono::steady_clock> last_stats_poll;
 
-    // start_api_server();
+    std::thread api_thread(&api_server_thread);
+    pthread_setname_np(api_thread.native_handle(), "api-server");
 
-    while (true) {
+    while (!should_exit) {
         std::chrono::time_point<std::chrono::steady_clock> cur_time =
             std::chrono::steady_clock().now();
 
@@ -371,6 +381,8 @@ int main() {
             poll_fds.push_back(fd);
         }
     }
+
+    api_thread.join();
 
     return 0;
 }
