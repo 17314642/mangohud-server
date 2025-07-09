@@ -288,12 +288,12 @@ int main() {
         std::chrono::time_point<std::chrono::steady_clock> cur_time =
             std::chrono::steady_clock().now();
 
-        if (cur_time - last_stats_poll > 1s) {
+        if (cur_time - last_stats_poll > 500ms) {
             poll_metrics(cpu, gpus, iostats);
             last_stats_poll = cur_time;
         }
 
-        int ret = poll(poll_fds.data(), poll_fds.size(), 1000);
+        int ret = poll(poll_fds.data(), poll_fds.size(), 100);
 
         if (ret < 0) {
             LOG_UNIX_ERRNO_ERROR("poll() failed.");
