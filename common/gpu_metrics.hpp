@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 struct gpu_metrics_process_t {
     int     load;
     float   vram_used;
