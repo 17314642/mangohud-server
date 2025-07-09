@@ -58,8 +58,8 @@ void IOStats::poll_pid(pid_t pid) {
     float read_mb_per_sec = (total_read - stats.previous_read_bytes) / (1024.f * 1024.f);
     float write_mb_per_sec = (total_write - stats.previous_write_bytes) / (1024.f * 1024.f);
 
-    read_mb_per_sec /= duration_cast<milliseconds>(delta).count() * 1000.f;
-    write_mb_per_sec /= duration_cast<milliseconds>(delta).count() * 1000.f;
+    read_mb_per_sec /= duration_cast<milliseconds>(delta).count() / 1000.f;
+    write_mb_per_sec /= duration_cast<milliseconds>(delta).count() / 1000.f;
 
     stats.read_mb_per_sec = read_mb_per_sec;
     stats.write_mb_per_sec = write_mb_per_sec;
