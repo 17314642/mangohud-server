@@ -28,7 +28,8 @@ float Zenpower::get_power_usage() {
     uint64_t soc_power  = hwmon.get_sensor_value("soc_power");
     
     float usage = (core_power + soc_power) / 1'000'000.f;
-    usage /= std::chrono::duration_cast<std::chrono::seconds>(delta_time_ns).count();
+    usage /= std::chrono::duration_cast<std::chrono::milliseconds>(delta_time_ns).count();
+    usage *= 1000.f;
 
     return usage;
 }

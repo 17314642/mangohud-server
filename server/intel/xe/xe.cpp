@@ -68,7 +68,8 @@ float Intel_xe::get_power_usage() {
     }
 
     float delta = current_power_usage - previous_power_usage;
-    delta /= std::chrono::duration_cast<std::chrono::seconds>(delta_time_ns).count();
+    delta /= std::chrono::duration_cast<std::chrono::milliseconds>(delta_time_ns).count();
+    delta *= 1000.f;
 
     previous_power_usage = current_power_usage;
 

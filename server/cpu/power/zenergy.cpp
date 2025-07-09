@@ -32,9 +32,9 @@ float Zenergy::get_power_usage() {
     }
     
     float usage = total_usage - previous_usage;
-    usage /= std::chrono::duration_cast<std::chrono::seconds>(delta_time_ns).count();
+    usage /= std::chrono::duration_cast<std::chrono::milliseconds>(delta_time_ns).count();
 
     previous_usage = total_usage;
 
-    return usage / 1'000'000;
+    return usage / 1'000.f;
 }

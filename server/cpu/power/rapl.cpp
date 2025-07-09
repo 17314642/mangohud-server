@@ -27,8 +27,8 @@ float RAPL::get_power_usage() {
     }
     
     float usage = total_usage - previous_usage;
-    usage /= std::chrono::duration_cast<std::chrono::seconds>(delta_time_ns).count();
-    usage /= 1'000'000;
+    usage /= std::chrono::duration_cast<std::chrono::milliseconds>(delta_time_ns).count();
+    usage /= 1'000.f;
 
     previous_usage = total_usage;
 
